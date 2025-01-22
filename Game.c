@@ -36,7 +36,6 @@ Game InitGame(int width, int height)
 
 void HandleCollisions (Game* game)
 {
-    // Player rect!
     Rectangle playerRect = {
         game->player.position.x,
         game->player.position.y,
@@ -47,13 +46,26 @@ void HandleCollisions (Game* game)
     // Bounce ball on collision with the player, depending on its angle
     if (CheckCollisionCircleRec(game->ball.position, game->ball.radius, playerRect))
     {
-        // 0.5 in the middle
-        float hitPosition = (game->ball.position.x - game->player.position.x) / game->player.width;
-        float angle = (hitPosition - 0.5f) * PI; // -π/2 to +π/2
+        // -1 to 1!
+        float paddleCenter = game->player.position.x + game->player.width/2;
+        float hitPosition = (game->ball.position.x - paddleCenter) / (game->player.width/2);
 
-        // sin hori, cos verti,
-        game->ball.direction.x = sinf(angle);
-        game->ball.direction.y = -cosf(angle);
+        // Here I want to define a 45 degree (PI/4) angle, as our maximum bounce (reflection) angle on collision
+        float maxAngle = PI/4;
+        float reflectionAngle = hitPosition * maxAngle;
+
+        // Here we calculate our balls new direction on collision: sin hori, cos verti,
+        game->ball.direction.x = sinf(reflectionAngle);
+        game->ball.direction.y = -fabs(cosf(reflectionAngle));  // Force upward
+
+        // Here, we normalize our direction vector by taking its total length X and Y / 2
+        float length = sqrtf(
+            game->ball.direction.x * game->ball.direction.x +
+            game->ball.direction.y * game->ball.direction.y
+        );
+
+        game->ball.direction.x /= length;
+        game->ball.direction.y /= length;
     }
 
     // Give score to the player on ball/block collision and combo!
@@ -72,9 +84,9 @@ void HandleCollisions (Game* game)
 
                 game->player.score += finalScore;
 
-                // Store the last score gained for display
+                // Store the last score gained for display + popUp time
                 game->lastScoreGained = finalScore;
-                game->lastScoreTimer = 1.0f; // Show for 1 second
+                game->lastScoreTimer = 1.0f;
             }
         }
     }
@@ -126,8 +138,12 @@ void UpdateGame(Game* game)
                 }
             }
 
-            game->player.position.x =
-                Clamp(game->player.position.x, 0, game->screenWidth - game->player.width);
+            game->player.position.x = Clamp
+            (
+                game->player.position.x,
+                0,
+                game->screenWidth -game->player.width
+            );
 
             if (IsKeyPressed(KEY_SPACE) && !game->ball.active)
             {

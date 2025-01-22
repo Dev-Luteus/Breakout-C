@@ -13,22 +13,30 @@ Game InitGame(int width, int height)
         .screenWidth = width,
         .screenHeight = height,
         .state = TUTORIAL,
-        .player = InitPlayer(width, height),
-        .ball = InitBall((Vector2){0, 0}),
         .combo = 0,
         .maxCombo = 0,
         .lastScoreGained = 0,
-        .lastScoreTimer = 0,
-        .dashEffect = 0
+        .lastScoreTimer = 0.0f,
+        .dashEffect = 0.0f
     };
 
+    // Player, Ball, Blocks
+    game.player = InitPlayer(width, height);
+
+    Vector2 initialBallPos = {
+        game.player.position.x + game.player.width / 2,
+        game.player.position.y - 20
+    };
+    game.ball = InitBall(initialBallPos);
+
     InitBlocks(game.blocks, width, height);
+
     return game;
 }
 
 void HandleCollisions (Game* game)
 {
-    // Ball-Player collision
+    // Player rect!
     Rectangle playerRect = {
         game->player.position.x,
         game->player.position.y,

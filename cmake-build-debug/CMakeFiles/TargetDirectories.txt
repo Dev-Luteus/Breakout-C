@@ -1,0 +1,3 @@
+C:/C Projects/Breakout-C/cmake-build-debug/CMakeFiles/RaylibGame.dir
+C:/C Projects/Breakout-C/cmake-build-debug/CMakeFiles/edit_cache.dir
+C:/C Projects/Breakout-C/cmake-build-debug/CMakeFiles/rebuild_cache.dir

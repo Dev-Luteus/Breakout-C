@@ -2,6 +2,9 @@
 #include <math.h>
 #include <raymath.h>
 #include <stdio.h>
+#include <PowerUp.h>
+#include <stdlib.h>
+#include <time.h>
 
 #define PADDING_TOP 40
 #define PADDING_SIDE 60
@@ -12,18 +15,25 @@ Game InitGame(int width, int height)
     Game game = {
         .screenWidth = width,
         .screenHeight = height,
+
         .state = TUTORIAL,
         .combo = 0,
         .maxCombo = 0,
+
         .lastScoreGained = 0,
         .lastScoreTimer = 0.0f,
-        .dashEffect = 0.0f
+        .dashEffect = 0.0f,
+
+        .powerUpCount = 0,
+        .powerUpSpawnCounter = 0,
+        .baseSpawnChance = 0.1f // base chance
     };
 
     // Player, Ball, Blocks
     game.player = InitPlayer(width, height);
 
-    Vector2 initialBallPos = {
+    Vector2 initialBallPos =
+    {
         game.player.position.x + game.player.width / 2,
         game.player.position.y - 20
     };
@@ -31,12 +41,22 @@ Game InitGame(int width, int height)
 
     InitBlocks(game.blocks, width, height);
 
+    // Powerups,
+    for (int i = 0; i < 10; i++)
+    {
+        game.powerUps[i].active = false;
+    }
+
+    // debugging powerups
+    srand(time(NULL));
+
     return game;
 }
 
 void HandleCollisions (Game* game)
 {
-    Rectangle playerRect = {
+    Rectangle playerRect =
+    {
         game->player.position.x,
         game->player.position.y,
         game->player.width,
@@ -59,7 +79,8 @@ void HandleCollisions (Game* game)
         game->ball.direction.y = -fabs(cosf(reflectionAngle));  // Force upward
 
         // Here, we normalize our direction vector by taking its total length X and Y / 2
-        float length = sqrtf(
+        float length = sqrtf
+        (
             game->ball.direction.x * game->ball.direction.x +
             game->ball.direction.y * game->ball.direction.y
         );
@@ -87,6 +108,29 @@ void HandleCollisions (Game* game)
                 // Store the last score gained for display + popUp time
                 game->lastScoreGained = finalScore;
                 game->lastScoreTimer = 1.0f;
+
+                if (ShouldSpawnPowerUp(game))
+                {
+                    Vector2 spawnPosition =
+                    {
+                        game->blocks[row][col].position.x + game->blocks[row][col].width / 2,
+                        game->blocks[row][col].position.y + game->blocks[row][col].height / 2
+                    };
+
+                    // Lazy so using rand() to randomly select a power-up!
+                    PowerUpType type = rand() % POWERUP_COUNT;
+
+                    for (int i = 0; i < 10; i++)
+                    {
+                        if (!game->powerUps[i].active)
+                        {
+                            game->powerUps[i] = CreatePowerUp(spawnPosition, type);
+                            game->powerUpCount++;
+
+                            break;
+                        }
+                    }
+                }
             }
         }
     }
@@ -163,7 +207,7 @@ void UpdateGame(Game* game)
                 UpdateBall(&game->ball, deltaTime, game->screenWidth, game->screenHeight);
                 HandleCollisions(game);
 
-                // Here I handle Killzone and Screenshake effect on life lost!
+                // Here I handle our Killzone!
                 if (game->ball.position.y > game->screenHeight)
                 {
                     game->player.lives--;
@@ -181,6 +225,9 @@ void UpdateGame(Game* game)
             {
                 game->state = WIN;
             }
+
+            UpdatePowerUps(game);
+            HandlePowerUpCollisions(game);
         } break;
 
         case GAME_OVER:
@@ -264,6 +311,7 @@ void DrawGame(Game game)
 
                 DrawBlocks(game.blocks);
                 DrawBall(game.ball);
+                DrawPowerUps(&game);
 
                 char comboText[64];
                 if (game.combo > 0)
@@ -335,9 +383,20 @@ void DrawGame(Game game)
 // Reinitialise everything on reset 'R' !
 void ResetGame(Game* game)
 {
+    // Reset power-ups to not save them through retries
+    game->powerUpCount = 0;
+    game->powerUpSpawnCounter = 0.0f;
+
+    for (int i = 0; i < 10; i++)
+    {
+        game->powerUps[i].active = false;
+    }
+
+    // Default values
     game->player = InitPlayer(game->screenWidth, game->screenHeight);
     game->ball = InitBall((Vector2){0, 0});
 
     InitBlocks(game->blocks, game->screenWidth, game->screenHeight);
     game->state = PLAYING;
+
 }

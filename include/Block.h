@@ -3,7 +3,7 @@
 #include <raylib.h>
 
 typedef struct Block {
-    Vector2 Position;
+    Vector2 position;
     int width;
     int height;
     Color color;

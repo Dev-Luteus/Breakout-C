@@ -8,13 +8,14 @@
 #define TRAIL_LENGTH 10
 #define TRAIL_SPACING 3
 
-typedef struct {
+typedef struct
+{
     Vector2 positions[TRAIL_LENGTH];
     int currentIndex;
 } BallTrail;
 
-
-typedef struct {
+typedef struct
+{
     Vector2 position;
     Vector2 direction;
     float radius;

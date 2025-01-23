@@ -42,7 +42,7 @@ void DrawBlocks(Block blocks[BLOCK_ROWS][BLOCK_COLUMNS])
 
             if (block.active)
             {
-                DrawRectangle(block.Position.x, block.Position.y, block.width, block.height, block.color);
+                DrawRectangle(block.position.x, block.position.y, block.width, block.height, block.color);
 
                 // Convert our block.lives into a string array (for text)! Make space for null operator
                 char lives[2];
@@ -50,8 +50,8 @@ void DrawBlocks(Block blocks[BLOCK_ROWS][BLOCK_COLUMNS])
 
                 Vector2 textPos = (Vector2)
                 {
-                    block.Position.x + block.width/2 - 5,
-                    block.Position.y + block.height/2 - 10
+                    block.position.x + block.width/2 - 5,
+                    block.position.y + block.height/2 - 10
                 };
 
                 DrawText(lives, textPos.x, textPos.y, 20, BLACK);
@@ -62,23 +62,26 @@ void DrawBlocks(Block blocks[BLOCK_ROWS][BLOCK_COLUMNS])
 
 bool CheckBlockCollision(Block* block, Ball* ball)
 {
-    if (!block->active) return false;
+    if (!block->active)
+    {
+        return false;
+    }
 
-    // We use ball->radius * 2 to slightly expand its collision
-    Rectangle blockRect = {
-        block->Position.x - ball->radius,
-        block->Position.y - ball->radius,
-        block->width + ball->radius * 2,
-        block->height + ball->radius * 2
+    Rectangle blockRect =
+    {
+        block->position.x,
+        block->position.y,
+        block->width,
+        block->height
     };
 
-    Vector2 ballPos = ball->position;
-
-    if (CheckCollisionPointRec(ballPos, blockRect))
+    // Check collision between circle (ball) and rectangle (block)
+    if (CheckCollisionCircleRec(ball->position, ball->radius, blockRect))
     {
+        // Reduce block life
         block->lives--;
 
-        if (block->lives == 0)
+        if (block->lives <= 0)
         {
             block->active = false;
         }
@@ -87,16 +90,16 @@ bool CheckBlockCollision(Block* block, Ball* ball)
             block->color = GetBlockColor(block->lives);
         }
 
-        float overlapLeft = ballPos.x - blockRect.x;
-        float overlapRight = blockRect.x + blockRect.width - ballPos.x;
-        float overlapTop = ballPos.y - blockRect.y;
-        float overlapBottom = blockRect.y + blockRect.height - ballPos.y;
+        // Calculate collision side and ball reflection
+        float blockCenterX = block->position.x + block->width/2;
+        float blockCenterY = block->position.y + block->height/2;
 
-        // Finding smallest overlap in order to fix an unlikely bug that can clear a whole column
-        float minOverlap = fminf(fminf(overlapLeft, overlapRight),
-                               fminf(overlapTop, overlapBottom));
+        // Get ball's relative position to block center
+        float dx = ball->position.x - blockCenterX;
+        float dy = ball->position.y - blockCenterY;
 
-        if (minOverlap == overlapLeft || minOverlap == overlapRight)
+        // Determine dominant axis of collision
+        if (fabs(dx/block->width) > fabs(dy/block->height))
         {
             ball->direction.x *= -1;
         }
@@ -105,12 +108,13 @@ bool CheckBlockCollision(Block* block, Ball* ball)
             ball->direction.y *= -1;
         }
 
-        // Adding slight randomisation when standing still!
-        ball->direction.x += (GetRandomValue(-10, 10) / 100.0f);
+        // Here we're trying to add some slight randomization to prevent straight/horizontal shots
+        ball->direction.x += (float)(GetRandomValue(-5, 5)) / 100.0f;
         ball->direction = Vector2Normalize(ball->direction);
 
         return true;
     }
+
     return false;
 }
 

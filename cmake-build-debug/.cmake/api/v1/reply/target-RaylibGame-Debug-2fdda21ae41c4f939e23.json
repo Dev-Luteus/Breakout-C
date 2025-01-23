@@ -86,7 +86,8 @@
 				3,
 				4,
 				5,
-				6
+				6,
+				7
 			]
 		}
 	],
@@ -144,7 +145,8 @@
 				3,
 				4,
 				5,
-				6
+				6,
+				7
 			]
 		}
 	],
@@ -190,6 +192,12 @@
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
 			"path" : "VectorMath.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "PowerUp.c",
 			"sourceGroupIndex" : 0
 		}
 	],

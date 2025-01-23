@@ -1,5 +1,5 @@
-﻿#include "../include/Block.h"
-#include "../include/BlocksManager.h"
+﻿#include "Block.h"
+#include "BlocksManager.h"
 
 Color GetBlockColor(int lives)
 {
@@ -20,7 +20,7 @@ Color GetBlockColor(int lives)
 Block InitBlock(int x, int y, int width, int height, int row)
 {
     Block block;
-    block.Position = (Vector2) {x, y};
+    block.position = (Vector2) {x, y};
     block.width = width;
     block.height = height;
     block.lives = BLOCK_ROWS+1 - row;

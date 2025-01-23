@@ -6,7 +6,7 @@
 
 #define BLOCK_ROWS 5
 #define BLOCK_COLUMNS 6
-#define BLOCK_SPACING 14
+#define BLOCK_SPACING 10
 #define BLOCK_TOP_OFFSET 0.15f
 #define BLOCK_SIDE_OFFSET 0.1f
 

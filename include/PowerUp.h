@@ -4,9 +4,16 @@
 #include <raylib.h>
 #include <stdbool.h>
 
-#define LIFE_COLOR (Color){0x8B, 0x1B, 0x52, 0xFF}   // #8B1B52
-#define SPEED_COLOR (Color){0xEC, 0xED, 0xAB, 0xFF}  // #ECEDAB
-#define GROWTH_COLOR (Color){0xAC, 0xED, 0xAB, 0xFF} // #ACEDAB
+#define PU_LIFE_COLOR (Color){0x8B, 0x1B, 0x52, 0xFF}   // #8B1B52
+#define PU_SPEED_COLOR (Color){0xEC, 0xED, 0xAB, 0xFF}  // #ECEDAB
+#define PU_GROWTH_COLOR (Color){0xAC, 0xED, 0xAB, 0xFF} // #ACEDAB
+
+#define PU_SPEED_DURATION 5.0f
+#define PU_GROWTH_DURATION 5.0f
+#define PU_DEFAULT_DURATION 0.0f
+
+#define PU_SPEED_AMOUNT 1.25f
+#define PU_GROWTH_AMOUNT 1.25
 
 typedef enum
 {
@@ -24,6 +31,11 @@ typedef struct
     bool active;
     PowerUpType type;
     Color color;
+
+    float duration;
+    float remainingDuration;
+    bool wasPickedUp;
+    double startTime; // When!
 } PowerUp;
 
 typedef struct
@@ -38,7 +50,7 @@ typedef struct
 } PowerUpSpawnSystem;
 
 // Core
-PowerUp CreatePowerUp(Vector2 position, PowerUpType type);
+PowerUp CreatePowerUp(Vector2 position, PowerUpType type, float duration);
 void UpdatePowerUp(PowerUp* powerUp, float deltaTime);
 void DrawPowerUp(PowerUp powerUp);
 bool CheckPowerUpCollision(const PowerUp* powerUp, Rectangle playerRect);

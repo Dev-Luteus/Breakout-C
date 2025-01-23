@@ -7,7 +7,7 @@ int main()
     const int height = 1080;
 
     InitWindow(width, height, "Block Kuzushi!");
-    SetTargetFPS(1000);
+    SetTargetFPS(300);
 
     Game game = InitGame(width, height);
 

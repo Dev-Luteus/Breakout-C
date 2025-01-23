@@ -3,7 +3,7 @@
 #include <Player.h>
 #include <raymath.h>
 
-#define BALL_SPEED_MIN 1000.0f
+#define BALL_SPEED_MIN 700.0f
 #define BALL_SPEED_MAX 2000.0f
 
 Ball InitBall(Vector2 position)

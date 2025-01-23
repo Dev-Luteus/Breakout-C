@@ -4,11 +4,11 @@
 #include "Ball.h"
 #include "../include/Block.h"
 
-#define BLOCK_ROWS 5
-#define BLOCK_COLUMNS 6
+#define BLOCK_ROWS 3
+#define BLOCK_COLUMNS 8
 #define BLOCK_SPACING 10
-#define BLOCK_TOP_OFFSET 0.15f
-#define BLOCK_SIDE_OFFSET 0.1f
+#define BLOCK_TOP_OFFSET 0.18f  // 0.15
+#define BLOCK_SIDE_OFFSET 0.12f  //0.1
 
 #define BLOCK_COLOR_1 (Color){0x31, 0x14, 0x3F, 0xFF}  // #31143F
 #define BLOCK_COLOR_2 (Color){0x55, 0x16, 0x46, 0xFF}  // #551646

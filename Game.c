@@ -123,7 +123,23 @@ void HandleCollisions (Game* game)
                     {
                         if (!game->powerUps[i].active)
                         {
-                            game->powerUps[i] = CreatePowerUp(spawnPosition, type);
+                            float duration;
+
+                            switch (type) {
+                                case POWERUP_SPEED:
+                                    duration = PU_SPEED_DURATION;
+                                break;
+
+                                case POWERUP_GROWTH:
+                                    duration = PU_GROWTH_DURATION;
+                                break;
+
+                                default:
+                                    duration = PU_DEFAULT_DURATION;
+                                break;
+                            }
+
+                            game->powerUps[i] = CreatePowerUp(spawnPosition, type, duration);
                             game->powerUpCount++;
 
                             break;
@@ -226,7 +242,9 @@ void UpdateGame(Game* game)
             }
 
             UpdatePowerUps(game);
+            UpdatePowerUpTimers(game);
             HandlePowerUpCollisions(game);
+
         } break;
 
         case GAME_OVER:

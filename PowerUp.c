@@ -38,13 +38,10 @@ bool CheckPowerUpSpawn(PowerUpSpawnSystem* system, int combo, int score, float d
     float chance = CalculateSpawnChance(system, combo, score);
     float roll = (float)rand() / RAND_MAX;
 
-    printf("Spawn Check - Chance: %f, Roll: %f, Combo: %d, Score: %d\n",
-           chance, roll, combo, score);
-
     if (roll < chance)
     {
         system->currentChance = system->baseChance; // Reset
-        printf("Spawn successful - Chance reset\n");
+        printf("Spawn successful\n");
 
         return true;
     }
@@ -52,34 +49,38 @@ bool CheckPowerUpSpawn(PowerUpSpawnSystem* system, int combo, int score, float d
 }
 
 // Here, I want to create a powerUp factory that should be modular and support new power-ups easily!
-PowerUp CreatePowerUp(Vector2 position, PowerUpType type)
+PowerUp CreatePowerUp(Vector2 position, PowerUpType type, float duration)
 {
     PowerUp powerUp =
     {
         .position = position,
-        .velocity = (Vector2){0, 200},  // Pixel p/s
+        .velocity = (Vector2){0, 300},  // Pixel p/s
         .radius = 24,
         .active = true,
         .type = type,
+        .duration = duration,
+        .remainingDuration = duration,
+        .wasPickedUp = false
     };
 
     // Assign color based on powerup type
     switch(type)
     {
         case POWERUP_LIFE:
-            powerUp.color = LIFE_COLOR;
-            break;
+            powerUp.color = PU_LIFE_COLOR;
+        break;
 
         case POWERUP_SPEED:
-            powerUp.color = SPEED_COLOR;
-            break;
+            powerUp.color = PU_SPEED_COLOR;
+        break;
 
         case POWERUP_GROWTH:
-            powerUp.color = GROWTH_COLOR;
-            break;
+            powerUp.color = PU_GROWTH_COLOR;
+        break;
 
         default:
             powerUp.color = WHITE;
+        break;
     }
 
     return powerUp;
@@ -107,14 +108,57 @@ void ApplyPowerUpEffect(PowerUp* powerUp, Player* player)
         break;
 
         case POWERUP_SPEED:
-            player->speed *= 1.1f;
-            powerUp->active = false;
+            player->speed = player->baseSpeed * PU_SPEED_AMOUNT;
+            powerUp->wasPickedUp = true;
+            powerUp->startTime = GetTime();
+            powerUp->duration = PU_SPEED_DURATION;
         break;
 
         case POWERUP_GROWTH:
-            player->width *= 1.1f;
-            powerUp->active = false;
+            player->width = player->baseWidth * PU_GROWTH_AMOUNT;
+            powerUp->wasPickedUp = true;
+            powerUp->startTime = GetTime();
+            powerUp->duration = PU_GROWTH_DURATION;
         break;
+    }
+}
+
+// Here we update our power up timers and durations, to make temporary powerups!
+void UpdatePowerUpTimers(Game* game)
+{
+    double currentTime = GetTime();
+
+    for (int i = 0; i < 10; i++)
+    {
+        PowerUp* powerUp = &game->powerUps[i];
+
+        if (powerUp->active && powerUp->wasPickedUp)
+        {
+            double elapsedTime = currentTime - powerUp->startTime;
+
+            // Here we check if the power-up duration has expired, and reset if so!
+            if (elapsedTime >= powerUp->duration)
+            {
+                switch(powerUp->type)
+                {
+                    case POWERUP_SPEED:
+                        game->player.speed = game->player.baseSpeed;
+                    break;
+
+                    case POWERUP_GROWTH:
+                        game->player.width = game->player.baseWidth;
+                    break;
+
+                    default:
+                        break;
+                }
+
+                // Deactivate the power-up
+                powerUp->active = false;
+                powerUp->wasPickedUp = false;
+                game->powerUpCount--;
+            }
+        }
     }
 }
 
@@ -138,8 +182,34 @@ void HandlePowerUpCollisions(Game* game)
 
         if (CheckPowerUpCollision(&game->powerUps[i], playerRect))
         {
-            ApplyPowerUpEffect(&game->powerUps[i], &game->player);
-            game->powerUpCount--;
+            // Check if this type of power-up is already active and picked up
+            bool alreadyActive = false;
+
+            for (int j = 0; j < 10; j++)
+            {
+                if (game->powerUps[j].active &&
+                    game->powerUps[j].type == game->powerUps[i].type &&
+                    game->powerUps[j].wasPickedUp &&
+                    game->powerUps[j].remainingDuration > 0)
+                {
+                    alreadyActive = true;
+                    break;
+                }
+            }
+
+            if (!alreadyActive)
+            {
+                ApplyPowerUpEffect(&game->powerUps[i], &game->player);
+                game->powerUpCount--;
+                printf("Applied power-up of type %d\n", game->powerUps[i].type);
+            }
+            else
+            {
+                printf("Power-up of type %d already active, skipping\n", game->powerUps[i].type);
+            }
+
+            // Always deactivate the collected power-up
+            game->powerUps[i].active = false;
         }
     }
 }
@@ -157,20 +227,51 @@ bool CheckPowerUpCollision(const PowerUp* powerUp, Rectangle playerRect)
 // Our general update method. We also make sure to remove power-ups if the player misses them in the killZone!
 void UpdatePowerUps(Game* game)
 {
-    float deltaTime = GetFrameTime();
+    double currentTime = GetTime();
 
     for (int i = 0; i < 10; i++)
     {
-        if (!game->powerUps[i].active)
+        PowerUp* powerUp = &game->powerUps[i];
+
+        if (!powerUp->active)
         {
             continue;
         }
 
-        UpdatePowerUp(&game->powerUps[i], deltaTime);
+        float deltaTime = GetFrameTime();
+        UpdatePowerUp(powerUp, deltaTime);
 
-        if (game->powerUps[i].position.y > game->screenHeight)
+        if (powerUp->wasPickedUp)
         {
-            game->powerUps[i].active = false;
+            double elapsedTime = currentTime - powerUp->startTime;
+
+            if (elapsedTime >= powerUp->duration)
+            {
+                // Reset effect based on type
+                switch(powerUp->type)
+                {
+                    case POWERUP_SPEED:
+                        game->player.speed = game->player.baseSpeed;
+                    break;
+
+                    case POWERUP_GROWTH:
+                        game->player.width = game->player.baseWidth;
+                    break;
+
+                    default:
+                        break;
+                }
+
+                powerUp->active = false;
+                powerUp->wasPickedUp = false;
+                game->powerUpCount--;
+            }
+        }
+
+        // Killzone Check
+        if (powerUp->position.y > game->screenHeight)
+        {
+            powerUp->active = false;
             game->powerUpCount--;
         }
     }
@@ -203,27 +304,37 @@ void DrawPowerUp(PowerUp powerUp)
     DrawCircleV(powerUp.position, powerUp.radius * 0.55f, WHITE);
 
     // Here we try to draw an ICON for each type of power up
+    const char* text;
+
     switch(powerUp.type)
     {
         case POWERUP_LIFE:
-            DrawText("+",
-                    powerUp.position.x - powerUp.radius * 0.3f,
-                    powerUp.position.y - powerUp.radius * 0.5f,
-                    powerUp.radius, BLACK);
+            text = "+";
             break;
 
         case POWERUP_SPEED:
-            DrawText("S",
-                    powerUp.position.x - powerUp.radius * 0.3f,
-                    powerUp.position.y - powerUp.radius * 0.5f,
-                    powerUp.radius, BLACK);
+            text = "S";
             break;
 
         case POWERUP_GROWTH:
-            DrawText("G",
-                    powerUp.position.x - powerUp.radius * 0.3f,
-                    powerUp.position.y - powerUp.radius * 0.5f,
-                    powerUp.radius, BLACK);
-        break;
+            text = "G";
+            break;
+
+        default:
+            text = "?";
+            break;
     }
+
+    int fontSize = powerUp.radius;
+    int textWidth = MeasureText(text, fontSize);
+    int textHeight = fontSize;
+
+    Vector2 textPosition =
+    {
+        powerUp.position.x - textWidth / 2,
+        powerUp.position.y - textHeight / 2
+    };
+
+    DrawText(text, textPosition.x, textPosition.y, fontSize, BLACK);
 }
+

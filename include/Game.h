@@ -31,13 +31,12 @@ typedef struct Game
     float lastScoreTimer;
     float dashEffect;
 
-    PowerUp powerUps[10];  // Active powerup array
+    PowerUp powerUps[10];
     int powerUpCount;
-    float powerUpSpawnCounter;
-    float baseSpawnChance;
+    PowerUpSpawnSystem spawnSystem;
 } Game;
 
-// Game Basics
+// Core!
 Game InitGame(int width, int height);
 void UpdateGame(Game* game);
 void DrawGame(Game game);
@@ -45,10 +44,8 @@ void HandleCollisions(Game* game);
 void ResetGame(Game* game);
 
 // Power ups
-void HandlePowerUpSpawn(Game* game, Vector2 blockPosition);
+void HandlePowerUpCollisions(Game* game);
 void UpdatePowerUps(Game* game);
 void DrawPowerUps(Game* game);
-void HandlePowerUpCollisions(Game* game);
-bool ShouldSpawnPowerUp(Game* game);
 
 #endif // GAME_H

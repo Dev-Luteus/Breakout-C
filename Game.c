@@ -25,8 +25,7 @@ Game InitGame(int width, int height)
         .dashEffect = 0.0f,
 
         .powerUpCount = 0,
-        .powerUpSpawnCounter = 0,
-        .baseSpawnChance = 0.1f // base chance
+        .spawnSystem = InitPowerUpSpawnSystem()
     };
 
     // Player, Ball, Blocks
@@ -41,13 +40,13 @@ Game InitGame(int width, int height)
 
     InitBlocks(game.blocks, width, height);
 
-    // Powerups,
+    // Initialize all powerups to inactive
     for (int i = 0; i < 10; i++)
     {
         game.powerUps[i].active = false;
     }
 
-    // debugging powerups
+    // Set random seed for powerup spawning
     srand(time(NULL));
 
     return game;
@@ -109,7 +108,7 @@ void HandleCollisions (Game* game)
                 game->lastScoreGained = finalScore;
                 game->lastScoreTimer = 1.0f;
 
-                if (ShouldSpawnPowerUp(game))
+                if (CheckPowerUpSpawn(&game->spawnSystem, game->combo, game->player.score, GetFrameTime()))
                 {
                     Vector2 spawnPosition =
                     {
@@ -385,7 +384,6 @@ void ResetGame(Game* game)
 {
     // Reset power-ups to not save them through retries
     game->powerUpCount = 0;
-    game->powerUpSpawnCounter = 0.0f;
 
     for (int i = 0; i < 10; i++)
     {
@@ -398,5 +396,4 @@ void ResetGame(Game* game)
 
     InitBlocks(game->blocks, game->screenWidth, game->screenHeight);
     game->state = PLAYING;
-
 }

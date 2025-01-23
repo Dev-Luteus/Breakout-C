@@ -5,6 +5,52 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+// Initialize our spawn system with balanced default values
+PowerUpSpawnSystem InitPowerUpSpawnSystem(void)
+{
+    return (PowerUpSpawnSystem)
+    {
+        .baseChance = 0.0f,
+        .comboMultiplier = 0.05f,      // 5% per combo
+        .scoreMultiplier = 0.05f,      // 5% per 1000
+        .maxChance = 0.20f,            // 20% cap
+        .cooldownTimer = 0.0f,
+        .cooldownDuration = 3.0f,      // Second cooldown
+        .currentChance = 0.0f
+    };
+}
+
+// Calculate current spawn chance based on player performance
+float CalculateSpawnChance(PowerUpSpawnSystem* system, int combo, int score)
+{
+    float comboBonus = combo * system->comboMultiplier;
+    float scoreBonus = (score / 1000.0f) * system->scoreMultiplier;
+
+    system->currentChance = system->baseChance + comboBonus + scoreBonus;
+    system->currentChance = fminf(system->currentChance, system->maxChance);
+
+    return system->currentChance;
+}
+
+// Determine if a powerup should spawn based on current conditions
+bool CheckPowerUpSpawn(PowerUpSpawnSystem* system, int combo, int score, float deltaTime)
+{
+    float chance = CalculateSpawnChance(system, combo, score);
+    float roll = (float)rand() / RAND_MAX;
+
+    printf("Spawn Check - Chance: %f, Roll: %f, Combo: %d, Score: %d\n",
+           chance, roll, combo, score);
+
+    if (roll < chance)
+    {
+        system->currentChance = system->baseChance; // Reset
+        printf("Spawn successful - Chance reset\n");
+
+        return true;
+    }
+    return false;
+}
+
 // Here, I want to create a powerUp factory that should be modular and support new power-ups easily!
 PowerUp CreatePowerUp(Vector2 position, PowerUpType type)
 {
@@ -12,11 +58,12 @@ PowerUp CreatePowerUp(Vector2 position, PowerUpType type)
     {
         .position = position,
         .velocity = (Vector2){0, 200},  // Pixel p/s
-        .radius = 10,
+        .radius = 18,
         .active = true,
         .type = type,
     };
 
+    // Assign color based on powerup type
     switch(type)
     {
         case POWERUP_LIFE:
@@ -34,6 +81,7 @@ PowerUp CreatePowerUp(Vector2 position, PowerUpType type)
     return powerUp;
 }
 
+// Update powerup position and state
 void UpdatePowerUp(PowerUp* powerUp, float deltaTime)
 {
     if (!powerUp->active)
@@ -44,6 +92,7 @@ void UpdatePowerUp(PowerUp* powerUp, float deltaTime)
     powerUp->position.y += powerUp->velocity.y * deltaTime;
 }
 
+// Here we apply our powerup effect to our player
 void ApplyPowerUpEffect(PowerUp* powerUp, Player* player)
 {
     switch(powerUp->type)
@@ -51,18 +100,20 @@ void ApplyPowerUpEffect(PowerUp* powerUp, Player* player)
         case POWERUP_LIFE:
             player->lives++;
             powerUp->active = false;
-        break;
+            break;
 
         case POWERUP_SPEED:
             player->speed *= 1.1f;
-        break;
+            powerUp->active = false;
+            break;
     }
 }
 
 // Here we check Player/PowerUp collision, and apply effects/handle powerups!
 void HandlePowerUpCollisions(Game* game)
 {
-    Rectangle playerRect = {
+    Rectangle playerRect =
+    {
         game->player.position.x,
         game->player.position.y,
         game->player.width,
@@ -76,7 +127,6 @@ void HandlePowerUpCollisions(Game* game)
             continue;
         }
 
-        // Here we handle our collisions!
         if (CheckPowerUpCollision(&game->powerUps[i], playerRect))
         {
             ApplyPowerUpEffect(&game->powerUps[i], &game->player);
@@ -85,6 +135,7 @@ void HandlePowerUpCollisions(Game* game)
     }
 }
 
+// Check collision between powerup and player rectangle
 bool CheckPowerUpCollision(const PowerUp* powerUp, Rectangle playerRect)
 {
     return CheckCollisionCircleRec(
@@ -92,35 +143,6 @@ bool CheckPowerUpCollision(const PowerUp* powerUp, Rectangle playerRect)
         powerUp->radius,
         playerRect
     );
-}
-
-// Here we define our Power Up spawn conditions: Based on Combo and Score!
-bool ShouldSpawnPowerUp(Game* game)
-{
-    float comboBonus = game->combo * 0.05f;  // 5% per combo
-    float scoreBonus = (game->player.score / 1000.0f) * 10.0f;  // 10% per 1000
-
-    float finalChance = game->baseSpawnChance + comboBonus + scoreBonus;
-    finalChance = fmin(finalChance, 0.5f);  // Cap at 50% chance
-
-    // Here we add a cooldown to prevent powerups from spawning too often!
-    game->powerUpSpawnCounter += GetFrameTime();
-
-    printf("Spawn Check - Final Chance: %f, Counter: %f\n", finalChance, game->powerUpSpawnCounter);
-
-    // Finalizing our spawn condition logic and resetting after a powerup has spawned!
-    float roll = (float)rand() / RAND_MAX;
-    printf("Random Roll: %f vs Chance: %f\n", roll, finalChance);
-
-    if (roll < finalChance)
-    {
-        printf("Spawn successful\n");
-        game->powerUpSpawnCounter = 0.0f;
-
-        return true;
-    }
-
-    return false;
 }
 
 // Our general update method. We also make sure to remove power-ups if the player misses them in the killZone!
@@ -145,7 +167,7 @@ void UpdatePowerUps(Game* game)
     }
 }
 
-// When we spawn them in-game in Game C!
+// Draw all active powerups in Game C!
 void DrawPowerUps(Game* game)
 {
     for (int i = 0; i < 10; i++)
@@ -157,7 +179,7 @@ void DrawPowerUps(Game* game)
     }
 }
 
-// The actual graphics that PowerUp C uses
+// Draw individual powerup with appropriate icon
 void DrawPowerUp(PowerUp powerUp)
 {
     if (!powerUp.active)
@@ -175,17 +197,17 @@ void DrawPowerUp(PowerUp powerUp)
     switch(powerUp.type)
     {
         case POWERUP_LIFE:
-                DrawText("+",
-                        powerUp.position.x - powerUp.radius * 0.3f,
-                        powerUp.position.y - powerUp.radius * 0.5f,
-                        powerUp.radius, RED);
-        break;
+            DrawText("+",
+                    powerUp.position.x - powerUp.radius * 0.3f,
+                    powerUp.position.y - powerUp.radius * 0.5f,
+                    powerUp.radius, RED);
+            break;
 
         case POWERUP_SPEED:
-                DrawText("S",
-                        powerUp.position.x - powerUp.radius * 0.3f,
-                        powerUp.position.y - powerUp.radius * 0.5f,
-                        powerUp.radius, YELLOW);
-        break;
+            DrawText("S",
+                    powerUp.position.x - powerUp.radius * 0.3f,
+                    powerUp.position.y - powerUp.radius * 0.5f,
+                    powerUp.radius, YELLOW);
+            break;
     }
 }

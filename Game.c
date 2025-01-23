@@ -241,6 +241,18 @@ void UpdateGame(Game* game)
                 game->state = WIN;
             }
 
+            // Debug testing
+            for (int i = 0; i < PU_MAX_COUNT; i++)
+            {
+                PowerUp* powerUp = &game->powerUps[i];
+                if (powerUp->active && powerUp->wasPickedUp)
+                {
+                    printf("Active powerup %d: %.2f remaining, active=%d, picked=%d\n",
+                           powerUp->type, powerUp->remainingDuration,
+                           powerUp->active, powerUp->wasPickedUp);
+                }
+            }
+
             UpdatePowerUps(game);
             HandlePowerUpCollisions(game);
 

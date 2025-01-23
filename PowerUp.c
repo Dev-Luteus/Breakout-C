@@ -114,11 +114,17 @@ void ApplyPowerUpEffect(PowerUp* powerUp, Player* player)
         case POWERUP_SPEED:
             player->speed = player->baseSpeed * PU_SPEED_MULTIPLIER;
             powerUp->duration = PU_SPEED_DURATION;
+            powerUp->active = true;  // Keep active to track duration
+            printf("Speed increased to %.2f for %.1f seconds\n",
+               player->speed, powerUp->duration);
         break;
 
         case POWERUP_GROWTH:
             player->width = player->baseWidth * PU_GROWTH_MULTIPLIER;
             powerUp->duration = PU_GROWTH_DURATION;
+            powerUp->active = true;  // Keep active to track duration
+            printf("Width increased to %d for %.1f seconds\n",
+            player->width, powerUp->duration);
         break;
     }
 }
@@ -134,24 +140,25 @@ void HandlePowerUpCollisions(Game* game)
         game->player.height
     };
 
-    for (int i = 0; i < 10; i++)
+    for (int i = 0; i < PU_MAX_COUNT; i++)
     {
-        if (!game->powerUps[i].active)
+        PowerUp* powerUp = &game->powerUps[i];
+
+        if (!powerUp->active || powerUp->wasPickedUp)
         {
+            // Skip if already picked up
             continue;
         }
 
-        if (CheckPowerUpCollision(&game->powerUps[i], playerRect))
+        if (CheckPowerUpCollision(powerUp, playerRect))
         {
-            // Check if this type of power-up is already active and picked up
             bool alreadyActive = false;
 
-            for (int j = 0; j < 10; j++)
+            for (int j = 0; j < PU_MAX_COUNT; j++)
             {
-                if (game->powerUps[j].active &&
-                    game->powerUps[j].type == game->powerUps[i].type &&
+                if (i != j && game->powerUps[j].active &&
                     game->powerUps[j].wasPickedUp &&
-                    game->powerUps[j].remainingDuration > 0)
+                    game->powerUps[j].type == powerUp->type)
                 {
                     alreadyActive = true;
                     break;
@@ -160,17 +167,18 @@ void HandlePowerUpCollisions(Game* game)
 
             if (!alreadyActive)
             {
-                ApplyPowerUpEffect(&game->powerUps[i], &game->player);
+                ApplyPowerUpEffect(powerUp, &game->player);
+                powerUp->active = true;      // Keep the power-up active for effect
+                powerUp->wasPickedUp = true; // Mark as picked up
                 game->powerUpCount--;
-                printf("Applied power-up of type %d\n", game->powerUps[i].type);
+                printf("Applied power-up of type %d\n", powerUp->type);
             }
             else
             {
-                printf("Power-up of type %d already active, skipping\n", game->powerUps[i].type);
+                powerUp->active = false;
+                game->powerUpCount--;
+                printf("Power-up of type %d already active, skipping\n", powerUp->type);
             }
-
-            // Always deactivate the collected power-up
-            game->powerUps[i].active = false;
         }
     }
 }
@@ -178,7 +186,8 @@ void HandlePowerUpCollisions(Game* game)
 // Check collision between powerup and player rectangle
 bool CheckPowerUpCollision(const PowerUp* powerUp, Rectangle playerRect)
 {
-    return CheckCollisionCircleRec(
+    return CheckCollisionCircleRec
+    (
         powerUp->position,
         powerUp->radius,
         playerRect
@@ -196,49 +205,42 @@ void UpdatePowerUps(Game* game)
         PowerUp* powerUp = &game->powerUps[i];
 
         if (!powerUp->active)
-        {
             continue;
-        }
 
-        // Update falling power-ups
         if (!powerUp->wasPickedUp)
         {
-            UpdatePowerUp(powerUp, deltaTime);
+            UpdatePowerUp(powerUp, deltaTime); // Update falling
 
-            // Check if power-up fell off screen
+            // Check for killZone
             if (powerUp->position.y > game->screenHeight)
             {
                 powerUp->active = false;
                 game->powerUpCount--;
-                continue;
             }
         }
-        // Handle active power-up effects
-        else if (powerUp->wasPickedUp)
+        else  // Power-up is active and was picked up
         {
             double elapsedTime = currentTime - powerUp->startTime;
             powerUp->remainingDuration = powerUp->duration - elapsedTime;
 
-            // Check if power-up duration has expired
+            printf("PowerUp type %d: %.2f seconds remaining\n",
+                   powerUp->type, powerUp->remainingDuration);
+
             if (powerUp->remainingDuration <= 0)
             {
-                // Reset the effect based on power-up type
                 switch(powerUp->type)
                 {
                     case POWERUP_SPEED:
                         game->player.speed = game->player.baseSpeed;
-                        printf("Speed power-up expired, reset to base speed: %.2f\n",
+                        printf("Speed power-up expired, reset to: %.2f\n",
                            game->player.baseSpeed);
                     break;
 
                     case POWERUP_GROWTH:
                         game->player.width = game->player.baseWidth;
-                        printf("Growth power-up expired, reset to base width: %.2f\n",
+                        printf("Growth power-up expired, reset to: %d\n",
                            game->player.baseWidth);
                     break;
-
-                    default:
-                        break;
                 }
 
                 powerUp->active = false;
@@ -252,9 +254,9 @@ void UpdatePowerUps(Game* game)
 // Draw all active powerups in Game C!
 void DrawPowerUps(Game* game)
 {
-    for (int i = 0; i < 10; i++)
+    for (int i = 0; i < PU_MAX_COUNT; i++)
     {
-        if (game->powerUps[i].active)
+        if (game->powerUps[i].active && !game->powerUps[i].wasPickedUp)
         {
             DrawPowerUp(game->powerUps[i]);
         }

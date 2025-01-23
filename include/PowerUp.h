@@ -4,10 +4,15 @@
 #include <raylib.h>
 #include <stdbool.h>
 
+#define LIFE_COLOR (Color){0x8B, 0x1B, 0x52, 0xFF}   // #8B1B52
+#define SPEED_COLOR (Color){0xEC, 0xED, 0xAB, 0xFF}  // #ECEDAB
+#define GROWTH_COLOR (Color){0xAC, 0xED, 0xAB, 0xFF} // #ACEDAB
+
 typedef enum
 {
     POWERUP_LIFE,
     POWERUP_SPEED,
+    POWERUP_GROWTH,
     POWERUP_COUNT // Active array!
 } PowerUpType;
 

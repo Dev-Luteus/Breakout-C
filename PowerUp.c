@@ -58,7 +58,7 @@ PowerUp CreatePowerUp(Vector2 position, PowerUpType type)
     {
         .position = position,
         .velocity = (Vector2){0, 200},  // Pixel p/s
-        .radius = 18,
+        .radius = 24,
         .active = true,
         .type = type,
     };
@@ -67,11 +67,15 @@ PowerUp CreatePowerUp(Vector2 position, PowerUpType type)
     switch(type)
     {
         case POWERUP_LIFE:
-            powerUp.color = RED;
+            powerUp.color = LIFE_COLOR;
             break;
 
         case POWERUP_SPEED:
-            powerUp.color = YELLOW;
+            powerUp.color = SPEED_COLOR;
+            break;
+
+        case POWERUP_GROWTH:
+            powerUp.color = GROWTH_COLOR;
             break;
 
         default:
@@ -100,12 +104,17 @@ void ApplyPowerUpEffect(PowerUp* powerUp, Player* player)
         case POWERUP_LIFE:
             player->lives++;
             powerUp->active = false;
-            break;
+        break;
 
         case POWERUP_SPEED:
             player->speed *= 1.1f;
             powerUp->active = false;
-            break;
+        break;
+
+        case POWERUP_GROWTH:
+            player->width *= 1.1f;
+            powerUp->active = false;
+        break;
     }
 }
 
@@ -191,7 +200,7 @@ void DrawPowerUp(PowerUp powerUp)
     DrawCircleV(powerUp.position, powerUp.radius, powerUp.color);
 
     // Inner circle!
-    DrawCircleV(powerUp.position, powerUp.radius * 0.6f, WHITE);
+    DrawCircleV(powerUp.position, powerUp.radius * 0.55f, WHITE);
 
     // Here we try to draw an ICON for each type of power up
     switch(powerUp.type)
@@ -200,14 +209,21 @@ void DrawPowerUp(PowerUp powerUp)
             DrawText("+",
                     powerUp.position.x - powerUp.radius * 0.3f,
                     powerUp.position.y - powerUp.radius * 0.5f,
-                    powerUp.radius, RED);
+                    powerUp.radius, BLACK);
             break;
 
         case POWERUP_SPEED:
             DrawText("S",
                     powerUp.position.x - powerUp.radius * 0.3f,
                     powerUp.position.y - powerUp.radius * 0.5f,
-                    powerUp.radius, YELLOW);
+                    powerUp.radius, BLACK);
             break;
+
+        case POWERUP_GROWTH:
+            DrawText("G",
+                    powerUp.position.x - powerUp.radius * 0.3f,
+                    powerUp.position.y - powerUp.radius * 0.5f,
+                    powerUp.radius, BLACK);
+        break;
     }
 }

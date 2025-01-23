@@ -100,65 +100,26 @@ void UpdatePowerUp(PowerUp* powerUp, float deltaTime)
 // Here we apply our powerup effect to our player
 void ApplyPowerUpEffect(PowerUp* powerUp, Player* player)
 {
+    powerUp->wasPickedUp = true;
+    powerUp->startTime = GetTime();
+
     switch(powerUp->type)
     {
         case POWERUP_LIFE:
             player->lives++;
-            powerUp->active = false;
+            powerUp->duration = PU_DEFAULT_DURATION;
+            powerUp->active = false;  // We do this for an immediate effect!
         break;
 
         case POWERUP_SPEED:
-            player->speed = player->baseSpeed * PU_SPEED_AMOUNT;
-            powerUp->wasPickedUp = true;
-            powerUp->startTime = GetTime();
+            player->speed = player->baseSpeed * PU_SPEED_MULTIPLIER;
             powerUp->duration = PU_SPEED_DURATION;
         break;
 
         case POWERUP_GROWTH:
-            player->width = player->baseWidth * PU_GROWTH_AMOUNT;
-            powerUp->wasPickedUp = true;
-            powerUp->startTime = GetTime();
+            player->width = player->baseWidth * PU_GROWTH_MULTIPLIER;
             powerUp->duration = PU_GROWTH_DURATION;
         break;
-    }
-}
-
-// Here we update our power up timers and durations, to make temporary powerups!
-void UpdatePowerUpTimers(Game* game)
-{
-    double currentTime = GetTime();
-
-    for (int i = 0; i < 10; i++)
-    {
-        PowerUp* powerUp = &game->powerUps[i];
-
-        if (powerUp->active && powerUp->wasPickedUp)
-        {
-            double elapsedTime = currentTime - powerUp->startTime;
-
-            // Here we check if the power-up duration has expired, and reset if so!
-            if (elapsedTime >= powerUp->duration)
-            {
-                switch(powerUp->type)
-                {
-                    case POWERUP_SPEED:
-                        game->player.speed = game->player.baseSpeed;
-                    break;
-
-                    case POWERUP_GROWTH:
-                        game->player.width = game->player.baseWidth;
-                    break;
-
-                    default:
-                        break;
-                }
-
-                // Deactivate the power-up
-                powerUp->active = false;
-                powerUp->wasPickedUp = false;
-                game->powerUpCount--;
-            }
-        }
     }
 }
 
@@ -228,8 +189,9 @@ bool CheckPowerUpCollision(const PowerUp* powerUp, Rectangle playerRect)
 void UpdatePowerUps(Game* game)
 {
     double currentTime = GetTime();
+    float deltaTime = GetFrameTime();
 
-    for (int i = 0; i < 10; i++)
+    for (int i = 0; i < PU_MAX_COUNT; i++)
     {
         PowerUp* powerUp = &game->powerUps[i];
 
@@ -238,24 +200,41 @@ void UpdatePowerUps(Game* game)
             continue;
         }
 
-        float deltaTime = GetFrameTime();
-        UpdatePowerUp(powerUp, deltaTime);
+        // Update falling power-ups
+        if (!powerUp->wasPickedUp)
+        {
+            UpdatePowerUp(powerUp, deltaTime);
 
-        if (powerUp->wasPickedUp)
+            // Check if power-up fell off screen
+            if (powerUp->position.y > game->screenHeight)
+            {
+                powerUp->active = false;
+                game->powerUpCount--;
+                continue;
+            }
+        }
+        // Handle active power-up effects
+        else if (powerUp->wasPickedUp)
         {
             double elapsedTime = currentTime - powerUp->startTime;
+            powerUp->remainingDuration = powerUp->duration - elapsedTime;
 
-            if (elapsedTime >= powerUp->duration)
+            // Check if power-up duration has expired
+            if (powerUp->remainingDuration <= 0)
             {
-                // Reset effect based on type
+                // Reset the effect based on power-up type
                 switch(powerUp->type)
                 {
                     case POWERUP_SPEED:
                         game->player.speed = game->player.baseSpeed;
+                        printf("Speed power-up expired, reset to base speed: %.2f\n",
+                           game->player.baseSpeed);
                     break;
 
                     case POWERUP_GROWTH:
                         game->player.width = game->player.baseWidth;
+                        printf("Growth power-up expired, reset to base width: %.2f\n",
+                           game->player.baseWidth);
                     break;
 
                     default:
@@ -266,13 +245,6 @@ void UpdatePowerUps(Game* game)
                 powerUp->wasPickedUp = false;
                 game->powerUpCount--;
             }
-        }
-
-        // Killzone Check
-        if (powerUp->position.y > game->screenHeight)
-        {
-            powerUp->active = false;
-            game->powerUpCount--;
         }
     }
 }

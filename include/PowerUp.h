@@ -8,12 +8,13 @@
 #define PU_SPEED_COLOR (Color){0xEC, 0xED, 0xAB, 0xFF}  // #ECEDAB
 #define PU_GROWTH_COLOR (Color){0xAC, 0xED, 0xAB, 0xFF} // #ACEDAB
 
-#define PU_SPEED_DURATION 5.0f
-#define PU_GROWTH_DURATION 5.0f
-#define PU_DEFAULT_DURATION 0.0f
+#define PU_SPEED_DURATION 5.0
+#define PU_GROWTH_DURATION 5.0
+#define PU_DEFAULT_DURATION 0.0
 
-#define PU_SPEED_AMOUNT 1.25f
-#define PU_GROWTH_AMOUNT 1.25
+#define PU_MAX_COUNT 10
+#define PU_SPEED_MULTIPLIER 1.25f
+#define PU_GROWTH_MULTIPLIER 1.50f
 
 typedef enum
 {

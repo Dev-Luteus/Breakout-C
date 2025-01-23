@@ -242,7 +242,6 @@ void UpdateGame(Game* game)
             }
 
             UpdatePowerUps(game);
-            UpdatePowerUpTimers(game);
             HandlePowerUpCollisions(game);
 
         } break;

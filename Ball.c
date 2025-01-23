@@ -34,43 +34,55 @@ void UpdateBall(Ball* ball, float deltaTime, int screenWidth, int screenHeight)
 
     // Update trail current index before moving the ball
     ball->trail.positions[ball->trail.currentIndex] = ball->position;
-    ball->trail.currentIndex = (ball->trail.currentIndex + 1) % TRAIL_LENGTH; // % stay within array
+    ball->trail.currentIndex = (ball->trail.currentIndex + 1) % TRAIL_LENGTH;
 
-    ball->position.x += ball->direction.x * ball->speed * deltaTime;
-    ball->position.y += ball->direction.y * ball->speed * deltaTime;
+    Vector2 movement = Vector2Scale(ball->direction, ball->speed * deltaTime);
+    ball->position = Vector2Add(ball->position, movement);
 
     // Bounce walls
-    if (ball->position.x - ball->radius <= 0 || ball->position.x + ball->radius >= screenWidth)
+    if (ball->position.x - ball->radius <= 0)
     {
-        ball->direction.x *= -1;
-
-        // Here I'm trying to enforce a minimum vertical component, to prevent a near-horizontal bouncing bug
-        float minVerticalComponent = 0.3f;
-
-        if (fabs(ball->direction.y) < minVerticalComponent)
-        {
-            ball->direction.y = (ball->direction.y > 0 ? minVerticalComponent : -minVerticalComponent);
-            ball->direction = Vector2Normalize(ball->direction);
-        }
-
+        ball->position.x = ball->radius;
+        ball->direction.x = fabs(ball->direction.x);
+        AdjustBallDirection(ball);
+        ball->speed = Clamp(ball->speed * 1.05f, BALL_SPEED_MIN, BALL_SPEED_MAX);
+    }
+    else if (ball->position.x + ball->radius >= screenWidth)
+    {
+        ball->position.x = screenWidth - ball->radius;
+        ball->direction.x = -fabs(ball->direction.x);
+        AdjustBallDirection(ball);
         ball->speed = Clamp(ball->speed * 1.05f, BALL_SPEED_MIN, BALL_SPEED_MAX);
     }
 
     // Bounce ceiling
     if (ball->position.y - ball->radius <= 0)
     {
-        ball->direction.y *= -1;
+        ball->position.y = ball->radius;
+        ball->direction.y = fabs(ball->direction.y);
 
-        // Enforce minimum horizontal component to prevent vertical bouncing
-        float minHorizontalComponent = 0.2f;
-        if (fabs(ball->direction.x) < minHorizontalComponent)
-        {
-            ball->direction.x = (GetRandomValue(0, 1) ? minHorizontalComponent : -minHorizontalComponent);
-            ball->direction = Vector2Normalize(ball->direction);
-        }
-
+        AdjustBallDirection(ball);
         ball->speed = Clamp(ball->speed * 1.05f, BALL_SPEED_MIN, BALL_SPEED_MAX);
     }
+}
+
+// Here I'm trying to enforce a minimum vertical component, to prevent a near-horizontal bouncing bug
+void AdjustBallDirection(Ball* ball)
+{
+    const float MIN_VERTICAL = 0.3f;
+    const float MIN_HORIZONTAL = 0.2f;
+
+    if (fabs(ball->direction.y) < MIN_VERTICAL)
+    {
+        ball->direction.y = (ball->direction.y >= 0 ? MIN_VERTICAL : -MIN_VERTICAL);
+    }
+
+    if (fabs(ball->direction.x) < MIN_HORIZONTAL)
+    {
+        ball->direction.x = (ball->direction.x >= 0 ? MIN_HORIZONTAL : -MIN_HORIZONTAL);
+    }
+
+    ball->direction = Vector2Normalize(ball->direction);
 }
 
 void DrawBall(Ball ball)

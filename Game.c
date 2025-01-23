@@ -154,6 +154,7 @@ void HandleCollisions (Game* game)
 void UpdateGame(Game* game)
 {
     float deltaTime = GetFrameTime();
+    game->spawnSystem.cooldownTimer -= deltaTime; // power ups
 
     switch(game->state)
     {
@@ -360,6 +361,7 @@ void ResetGame(Game* game)
 {
     // Reset power-ups to not save them through retries
     game->powerUpCount = 0;
+    game->spawnSystem = InitPowerUpSpawnSystem(); // Reset spawn system (timers etc)
 
     for (int i = 0; i < 10; i++)
     {

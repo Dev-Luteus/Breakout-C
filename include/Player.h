@@ -4,7 +4,7 @@
 #include <raylib.h>
 #include <stdbool.h>
 
-#define PLAYER_SPEED_BOOST 1.4f
+#define PLAYER_SPEED_BOOST 1.5f
 #define PLAYER_COLOR (Color){ 0xE8, 0x67, 0x94, 0xFF }
 
 #define PLAYER_TRAIL_LENGTH 14

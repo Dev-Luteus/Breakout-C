@@ -35,13 +35,23 @@ float CalculateSpawnChance(PowerUpSpawnSystem* system, int combo, int score)
 // Determine if a powerup should spawn based on current conditions
 bool CheckPowerUpSpawn(PowerUpSpawnSystem* system, int combo, int score, float deltaTime)
 {
+    // Update the cooldown timer
+    system->cooldownTimer -= deltaTime;
+
+    if (system->cooldownTimer > 0)
+    {
+        return false;
+    }
+
     float chance = CalculateSpawnChance(system, combo, score);
     float roll = (float)rand() / RAND_MAX;
 
+    // On success, restart cooldown!
     if (roll < chance)
     {
-        system->currentChance = system->baseChance; // Reset
-        printf("Spawn successful\n");
+        system->currentChance = system->baseChance;
+        system->cooldownTimer = system->cooldownDuration;
+        printf("Spawn successful, cooldown started: %.2f seconds\n", system->cooldownDuration);
 
         return true;
     }

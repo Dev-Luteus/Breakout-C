@@ -28,3 +28,10 @@
 111	238	7593653258039001	RaylibGame.exe	473bf5b145026528
 2	91	7593655446730645	CMakeFiles/RaylibGame.dir/PowerUp.c.obj	a77fa37f3b823c0e
 92	217	7593655447636127	RaylibGame.exe	473bf5b145026528
+3	96	7593659228885577	CMakeFiles/RaylibGame.dir/main.c.obj	97fed9ada13ca7f
+11	105	7593659228973025	CMakeFiles/RaylibGame.dir/Block.c.obj	b22d9ebff446e17e
+23	122	7593659229086404	CMakeFiles/RaylibGame.dir/Ball.c.obj	18f7445c4b57ff39
+18	133	7593659229042577	CMakeFiles/RaylibGame.dir/BlocksManager.c.obj	62f793c48a9fc4d5
+27	140	7593659229126591	CMakeFiles/RaylibGame.dir/PowerUp.c.obj	a77fa37f3b823c0e
+7	141	7593659228929739	CMakeFiles/RaylibGame.dir/Game.c.obj	fbbb0bb06aebacc9
+141	274	7593659230264002	RaylibGame.exe	473bf5b145026528

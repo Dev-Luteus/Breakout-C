@@ -2,6 +2,7 @@
 #include <raylib.h>
 #include <raymath.h>
 #include <stdio.h>
+#include "Ball.h"
 
 void CalculateBlockDimensions(int screenWidth, int screenHeight, float *blockWidth, float *blockHeight)
 {
@@ -111,6 +112,16 @@ bool CheckBlockCollision(Block* block, Ball* ball)
         // Here we're trying to add some slight randomization to prevent straight/horizontal shots
         ball->direction.x += (float)(GetRandomValue(-5, 5)) / 100.0f;
         ball->direction = Vector2Normalize(ball->direction);
+
+        // Add speed boost on block collision
+        const float SPEED_BOOST_MULTIPLIER = 1.05f;
+
+        ball->speed = Clamp
+        (
+            ball->speed * SPEED_BOOST_MULTIPLIER,
+            BALL_SPEED_MIN,
+            BALL_SPEED_MAX
+        );
 
         return true;
     }

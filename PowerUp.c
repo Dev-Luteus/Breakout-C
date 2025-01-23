@@ -205,7 +205,9 @@ void UpdatePowerUps(Game* game)
         PowerUp* powerUp = &game->powerUps[i];
 
         if (!powerUp->active)
+        {
             continue;
+        }
 
         if (!powerUp->wasPickedUp)
         {

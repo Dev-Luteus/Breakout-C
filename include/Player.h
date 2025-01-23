@@ -2,11 +2,22 @@
 #define PLAYER_H
 
 #include <raylib.h>
+#include <stdbool.h>
 
-#define PLAYER_SPEED_BOOST 1.1
+#define PLAYER_SPEED_BOOST 1.4f
 #define PLAYER_COLOR (Color){ 0xE8, 0x67, 0x94, 0xFF }
 
-typedef struct Player {
+#define PLAYER_TRAIL_LENGTH 14
+#define PLAYER_TRAIL_SPACING 3
+
+typedef struct
+{
+    Vector2 positions[PLAYER_TRAIL_LENGTH];
+    int currentIndex;
+} PlayerTrail;
+
+typedef struct Player
+{
     Vector2 position;
     float baseSpeed;
     float speed;
@@ -15,8 +26,18 @@ typedef struct Player {
     int width;
     int lives;
     int score;
+    PlayerTrail trail;
+    bool isDashing;
 } Player;
 
+// Core initialization
 Player InitPlayer(int width, int height);
+
+// Movement functions
+void UpdatePlayerMovement(Player* player, float deltaTime, float screenWidth);
+void UpdatePlayerTrail(Player* player, Vector2 prevPosition);
+
+// Trail render
+void DrawPlayerWithTrail(const Player* player);
 
 #endif //PLAYER_H

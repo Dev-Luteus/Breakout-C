@@ -166,48 +166,18 @@ void UpdateGame(Game* game)
 
         case PLAYING:
         {
-            // Reset dash effect at the start of each frame
-            game->dashEffect = fmax(game->dashEffect - deltaTime * 5, 0.0f);
-
             if (game->lastScoreTimer > 0)
             {
                 game->lastScoreTimer -= deltaTime;
             }
 
-            // Player movement
-            if (IsKeyDown(KEY_RIGHT))
-            {
-                game->player.position.x += game->player.speed * deltaTime;
+            // Update player movement and trail
+            UpdatePlayerMovement(&game->player, deltaTime, game->screenWidth);
 
-                if (IsKeyDown(KEY_LEFT_SHIFT))
-                {
-                    game->player.position.x += game->player.speed * deltaTime * PLAYER_SPEED_BOOST;
-                    game->dashEffect = fmin(game->dashEffect + deltaTime * 10, 1.0f);
-                }
-            }
-
-            if (IsKeyDown(KEY_LEFT))
-            {
-                game->player.position.x -= game->player.speed * deltaTime;
-
-                if (IsKeyDown(KEY_LEFT_SHIFT))
-                {
-                    game->player.position.x -= game->player.speed * deltaTime * PLAYER_SPEED_BOOST;
-                    game->dashEffect = fmin(game->dashEffect + deltaTime * 10, 1.0f);
-                }
-            }
-
-            game->player.position.x = Clamp
-            (
-                game->player.position.x,
-                0,
-                game->screenWidth -game->player.width
-            );
-
+            // Ball shooting
             if (IsKeyPressed(KEY_SPACE) && !game->ball.active)
             {
-                Vector2 startPosition = (Vector2)
-                {
+                Vector2 startPosition = (Vector2){
                     game->player.position.x + game->player.width / 2,
                     game->player.position.y - game->ball.radius
                 };
@@ -235,13 +205,22 @@ void UpdateGame(Game* game)
                     }
                 }
             }
+            else // Ball is not active
+            {
+                // Update ball position to follow player when not launched
+                game->ball.position = (Vector2){
+                    game->player.position.x + game->player.width / 2,
+                    game->player.position.y - game->ball.radius
+                };
+            }
+
             // Check win condition
             if (AreAllBlocksDestroyed(game->blocks))
             {
                 game->state = WIN;
             }
 
-            // Debug testing
+            // Debug power-up info
             for (int i = 0; i < PU_MAX_COUNT; i++)
             {
                 PowerUp* powerUp = &game->powerUps[i];
@@ -255,7 +234,6 @@ void UpdateGame(Game* game)
 
             UpdatePowerUps(game);
             HandlePowerUpCollisions(game);
-
         } break;
 
         case GAME_OVER:
@@ -301,46 +279,13 @@ void DrawGame(Game game)
 
             case PLAYING:
             {
-                // Here we Draw the player dash trail effect when dashing!
-                if (game.dashEffect > 0 && IsKeyDown(KEY_LEFT_SHIFT))
-                {
-                    bool movingRight = IsKeyDown(KEY_RIGHT);
-                    bool movingLeft = IsKeyDown(KEY_LEFT);
-
-                    if (movingRight || movingLeft)
-                    {
-                        for (int i = 1; i <= 5; i++)
-                        {
-                            // Decrease alpha as i increases!
-                            float alpha = (5 - i) / 5.0f * game.dashEffect;
-                            Color trailColor = {255, 255, 255, (unsigned char)(alpha * 128)};
-
-                            float offset = (movingRight ? -1 : 1) * i * 15;
-
-                            DrawRectangle(
-                                game.player.position.x,
-                                game.player.position.y,
-                                game.player.width,
-                                game.player.height,
-                                ColorAlpha(PLAYER_COLOR, alpha * 0.5f)
-                            );
-                        }
-                    }
-                }
-
-                // Draw our player after our trail!
-                DrawRectangle(
-                    game.player.position.x,
-                    game.player.position.y,
-                    game.player.width,
-                    game.player.height,
-                    PLAYER_COLOR
-                );
-
+                // Draw game elements
+                DrawPlayerWithTrail(&game.player);
                 DrawBlocks(game.blocks);
                 DrawBall(game.ball);
                 DrawPowerUps(&game);
 
+                // Draw combo text
                 char comboText[64];
                 if (game.combo > 0)
                 {
@@ -358,13 +303,12 @@ void DrawGame(Game game)
                     FONT_SIZE,
                     game.combo > 0 ? GREEN : WHITE);
 
-                // Here we want to show the last score gained, if our timer is active
+                // Draw score popup
                 if (game.lastScoreTimer > 0)
                 {
                     char scorePopup[32];
                     sprintf(scorePopup, "+%d", game.lastScoreGained);
 
-                    // Here we add a fade out effect to our timer!
                     float alpha = game.lastScoreTimer;
                     Color popupColor = {0, 255, 0, (unsigned char)(alpha * 255)};
 
@@ -375,21 +319,24 @@ void DrawGame(Game game)
                         popupColor);
                 }
 
+                // Draw score
                 char scoreText[32];
                 sprintf(scoreText, "Score: %d", game.player.score);
-                int scoreTextWidth = MeasureText(scoreText, FONT_SIZE);
                 DrawText(scoreText,
                     PADDING_SIDE,
                     PADDING_TOP,
-                    FONT_SIZE, WHITE);
+                    FONT_SIZE,
+                    WHITE);
 
+                // Draw lives
                 char livesText[32];
                 sprintf(livesText, "Lives: %d", game.player.lives);
                 int livesTextWidth = MeasureText(livesText, FONT_SIZE);
                 DrawText(livesText,
                     game.screenWidth - livesTextWidth - PADDING_SIDE,
                     PADDING_TOP,
-                    FONT_SIZE, WHITE);
+                    FONT_SIZE,
+                    WHITE);
             } break;
 
             case GAME_OVER:

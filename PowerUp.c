@@ -54,7 +54,7 @@ PowerUp CreatePowerUp(Vector2 position, PowerUpType type, float duration)
     PowerUp powerUp =
     {
         .position = position,
-        .velocity = (Vector2){0, 300},  // Pixel p/s
+        .velocity = (Vector2){0, 400},  // Pixel p/s
         .radius = 24,
         .active = true,
         .type = type,

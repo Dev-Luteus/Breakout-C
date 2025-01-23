@@ -53,7 +53,7 @@ void UpdateBall(Ball* ball, float deltaTime, int screenWidth, int screenHeight)
             ball->direction = Vector2Normalize(ball->direction);
         }
 
-        ball->speed = Clamp(ball->speed * 1.1f, BALL_SPEED_MIN, BALL_SPEED_MAX);
+        ball->speed = Clamp(ball->speed * 1.05f, BALL_SPEED_MIN, BALL_SPEED_MAX);
     }
 
     // Bounce ceiling
@@ -69,7 +69,7 @@ void UpdateBall(Ball* ball, float deltaTime, int screenWidth, int screenHeight)
             ball->direction = Vector2Normalize(ball->direction);
         }
 
-        ball->speed = Clamp(ball->speed * 1.1f, BALL_SPEED_MIN, BALL_SPEED_MAX);
+        ball->speed = Clamp(ball->speed * 1.05f, BALL_SPEED_MIN, BALL_SPEED_MAX);
     }
 }
 

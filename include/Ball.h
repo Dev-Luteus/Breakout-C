@@ -5,7 +5,7 @@
 #include <raylib.h>
 #include <stdbool.h>
 
-#define BALL_SPEED_MIN 800.0f
+#define BALL_SPEED_MIN 1000.0f
 #define BALL_SPEED_MAX 2000.0f
 #define TRAIL_LENGTH 10
 #define TRAIL_SPACING 3

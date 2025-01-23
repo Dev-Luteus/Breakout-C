@@ -286,6 +286,9 @@ void DrawGame(Game game)
                 DrawBall(game.ball);
                 DrawPowerUps(&game);
 
+                // UI Elements
+                DrawPowerUpTimers(game);
+
                 // Draw combo text
                 char comboText[64];
                 if (game.combo > 0)

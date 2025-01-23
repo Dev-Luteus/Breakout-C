@@ -10,10 +10,10 @@ PowerUpSpawnSystem InitPowerUpSpawnSystem(void)
 {
     return (PowerUpSpawnSystem)
     {
-        .baseChance = 0.0f,
-        .comboMultiplier = 0.05f,      // 5% per combo
-        .scoreMultiplier = 0.05f,      // 5% per 1000
-        .maxChance = 0.20f,            // 20% cap
+        .baseChance = 0.05f,
+        .comboMultiplier = 0.05f,      // % per combo
+        .scoreMultiplier = 0.10f,      // % per 1000
+        .maxChance = 0.25f,            // % cap
         .cooldownTimer = 0.0f,
         .cooldownDuration = 3.0f,      // Second cooldown
         .currentChance = 0.0f
@@ -64,7 +64,7 @@ PowerUp CreatePowerUp(Vector2 position, PowerUpType type, float duration)
     PowerUp powerUp =
     {
         .position = position,
-        .velocity = (Vector2){0, 400},  // Pixel p/s
+        .velocity = (Vector2){0, 500},  // Pixel p/s
         .radius = 24,
         .active = true,
         .type = type,
@@ -324,3 +324,48 @@ void DrawPowerUp(PowerUp powerUp)
     DrawText(text, textPosition.x, textPosition.y, fontSize, BLACK);
 }
 
+// To display our power ups, we're drawing a timer for each type as an indictator
+void DrawPowerUpTimers(Game game)
+{
+    const int timerHeight = 12;
+    const int timerWidth = 100;
+    const int padding = 15;
+    int activeTimers = 0;
+
+    for (int i = 0; i < PU_MAX_COUNT; i++)
+    {
+        PowerUp* powerUp = &game.powerUps[i];
+
+        if (powerUp->active && powerUp->wasPickedUp && powerUp->duration > 0)
+        {
+            // Calculate position for the timer bar
+            int x = 15;  // Left margin
+            int y = game.screenHeight - 30 - (activeTimers * (timerHeight + padding));  // Bottom margin
+
+            float fillPercent = powerUp->remainingDuration / powerUp->duration;
+
+            DrawRectangle(x, y, timerWidth, timerHeight, GRAY); // Background!
+            DrawRectangle(x, y, timerWidth * fillPercent, timerHeight, powerUp->color);  // Timer fill!
+
+            const char* text;
+
+            switch(powerUp->type)
+            {
+                case POWERUP_SPEED:
+                    text = "S";
+                break;
+
+                case POWERUP_GROWTH:
+                    text = "G";
+                break;
+
+                default:
+                    text = "?";
+                break;
+            }
+
+            DrawText(text, x + timerWidth + 5, y - 2, timerHeight + 4, powerUp->color);
+            activeTimers++;
+        }
+    }
+}

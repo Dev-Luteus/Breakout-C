@@ -47,5 +47,6 @@ void ResetGame(Game* game);
 void HandlePowerUpCollisions(Game* game);
 void UpdatePowerUps(Game* game);
 void DrawPowerUps(Game* game);
+void DrawPowerUpTimers(Game game);
 
 #endif // GAME_H

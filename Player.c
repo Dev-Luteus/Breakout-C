@@ -115,7 +115,8 @@ void DrawPlayerWithTrail(const Player* player)
             float scaledWidth = player->width * widthScale;
             float xOffset = (player->width - scaledWidth) / 2;
 
-            DrawRectangle(
+            DrawRectangle
+            (
                 trailPos.x + xOffset,
                 trailPos.y,
                 scaledWidth,
@@ -126,7 +127,8 @@ void DrawPlayerWithTrail(const Player* player)
     }
 
     // Draw player
-    DrawRectangle(
+    DrawRectangle
+    (
         player->position.x,
         player->position.y,
         player->width,

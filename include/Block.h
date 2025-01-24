@@ -1,6 +1,7 @@
 ﻿#ifndef BLOCK_H
 #define BLOCK_H
-#include <raylib.h>
+
+#include "VectorMath.h"
 
 typedef struct Block {
     Vector2 position;

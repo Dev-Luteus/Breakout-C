@@ -3,6 +3,7 @@
 #include <raymath.h>
 #include <stdio.h>
 #include "Ball.h"
+#include "VectorMath.h"
 
 void CalculateBlockDimensions(int screenWidth, int screenHeight, float *blockWidth, float *blockHeight)
 {
@@ -63,25 +64,24 @@ void DrawBlocks(Block blocks[BLOCK_ROWS][BLOCK_COLUMNS])
 
 bool CheckBlockCollision(Block* block, Ball* ball)
 {
-    if (!block->active)
-    {
-        return false;
-    }
-
-    Rectangle blockRect =
-    {
-        block->position.x,
-        block->position.y,
-        block->width,
-        block->height
-    };
+    if (!block->active) return false;
 
     // Check collision between circle (ball) and rectangle (block)
-    if (CheckCollisionCircleRec(ball->position, ball->radius, blockRect))
-    {
-        // Reduce block life
-        block->lives--;
+    float closestX = fmaxf(block->position.x,
+                          fminf(ball->position.x, block->position.x + block->width));
 
+    float closestY = fmaxf(block->position.y,
+                          fminf(ball->position.y, block->position.y + block->height));
+
+    // Here we try to calculate the distance between the closest point and the circle center
+    Vector2 closestPoint = MyVector2Create(closestX, closestY);
+    Vector2 ballToClosest = MyVector2Subtract(closestPoint, ball->position);
+    float distanceSquared = MyVector2DotProduct(ballToClosest, ballToClosest);
+
+    if (distanceSquared <= (ball->radius * ball->radius))
+    {
+        // Collision detected
+        block->lives--;
         if (block->lives <= 0)
         {
             block->active = false;
@@ -91,16 +91,17 @@ bool CheckBlockCollision(Block* block, Ball* ball)
             block->color = GetBlockColor(block->lives);
         }
 
-        // Calculate collision side and ball reflection
-        float blockCenterX = block->position.x + block->width/2;
-        float blockCenterY = block->position.y + block->height/2;
+        // Calculate exact collision normal
+        Vector2 blockCenter = MyVector2Create(
+            block->position.x + block->width/2,
+            block->position.y + block->height/2
+        );
 
-        // Get ball's relative position to block center
-        float dx = ball->position.x - blockCenterX;
-        float dy = ball->position.y - blockCenterY;
+        Vector2 ballToBlock = MyVector2Subtract(ball->position, blockCenter);
+        float dx = fabs(ballToBlock.x) / (block->width/2);
+        float dy = fabs(ballToBlock.y) / (block->height/2);
 
-        // Determine dominant axis of collision
-        if (fabs(dx/block->width) > fabs(dy/block->height))
+        if (dx > dy)
         {
             ball->direction.x *= -1;
         }
@@ -109,16 +110,17 @@ bool CheckBlockCollision(Block* block, Ball* ball)
             ball->direction.y *= -1;
         }
 
-        // Here we're trying to add some slight randomization to prevent straight/horizontal shots
-        ball->direction.x += (float)(GetRandomValue(-5, 5)) / 100.0f;
-        ball->direction = Vector2Normalize(ball->direction);
+        // Add slight randomization
+        Vector2 randomOffset = MyVector2Create(
+            (float)(GetRandomValue(-5, 5)) / 100.0f,
+            0
+        );
+        ball->direction = MyVector2Add(ball->direction, randomOffset);
+        ball->direction = MyVector2Normalize(ball->direction);
 
-        // Add speed boost on block collision
-        const float SPEED_BOOST_MULTIPLIER = 1.05f;
-
-        ball->speed = Clamp
-        (
-            ball->speed * SPEED_BOOST_MULTIPLIER,
+        // Speed boost
+        ball->speed = Clamp(
+            ball->speed * 1.05f,
             BALL_SPEED_MIN,
             BALL_SPEED_MAX
         );

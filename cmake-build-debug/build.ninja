@@ -105,6 +105,13 @@ build CMakeFiles/RaylibGame.dir/PowerUp.c.obj: C_COMPILER__RaylibGame_unscanned_
   OBJECT_DIR = CMakeFiles\RaylibGame.dir
   OBJECT_FILE_DIR = CMakeFiles\RaylibGame.dir
 
+build CMakeFiles/RaylibGame.dir/MainMenu.c.obj: C_COMPILER__RaylibGame_unscanned_Debug C$:/C$ Projects/Breakout-C/MainMenu.c || cmake_object_order_depends_target_RaylibGame
+  DEP_FILE = CMakeFiles\RaylibGame.dir\MainMenu.c.obj.d
+  FLAGS = -g -std=gnu11 -fdiagnostics-color=always
+  INCLUDES = -I"C:/C Projects/Breakout-C/include"
+  OBJECT_DIR = CMakeFiles\RaylibGame.dir
+  OBJECT_FILE_DIR = CMakeFiles\RaylibGame.dir
+
 
 # =============================================================================
 # Link build statements for EXECUTABLE target RaylibGame
@@ -113,7 +120,7 @@ build CMakeFiles/RaylibGame.dir/PowerUp.c.obj: C_COMPILER__RaylibGame_unscanned_
 #############################################
 # Link the executable RaylibGame.exe
 
-build RaylibGame.exe: C_EXECUTABLE_LINKER__RaylibGame_Debug CMakeFiles/RaylibGame.dir/main.c.obj CMakeFiles/RaylibGame.dir/Game.c.obj CMakeFiles/RaylibGame.dir/Player.c.obj CMakeFiles/RaylibGame.dir/Block.c.obj CMakeFiles/RaylibGame.dir/BlocksManager.c.obj CMakeFiles/RaylibGame.dir/Ball.c.obj CMakeFiles/RaylibGame.dir/VectorMath.c.obj CMakeFiles/RaylibGame.dir/PowerUp.c.obj
+build RaylibGame.exe: C_EXECUTABLE_LINKER__RaylibGame_Debug CMakeFiles/RaylibGame.dir/main.c.obj CMakeFiles/RaylibGame.dir/Game.c.obj CMakeFiles/RaylibGame.dir/Player.c.obj CMakeFiles/RaylibGame.dir/Block.c.obj CMakeFiles/RaylibGame.dir/BlocksManager.c.obj CMakeFiles/RaylibGame.dir/Ball.c.obj CMakeFiles/RaylibGame.dir/VectorMath.c.obj CMakeFiles/RaylibGame.dir/PowerUp.c.obj CMakeFiles/RaylibGame.dir/MainMenu.c.obj
   FLAGS = -g
   LINK_LIBRARIES = -lraylib  -lwinmm  -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32
   LINK_PATH = -LC:/CPROJE~1/BREAKO~1/lib

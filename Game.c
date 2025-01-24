@@ -1,6 +1,6 @@
 ﻿#include "Game.h"
+#include <MainMenu.h>
 #include <math.h>
-#include <raymath.h>
 #include <stdio.h>
 #include <PowerUp.h>
 #include <stdlib.h>
@@ -16,7 +16,8 @@ Game InitGame(int width, int height)
         .screenWidth = width,
         .screenHeight = height,
 
-        .state = TUTORIAL,
+        .state = MAIN_MENU,
+        .selectedOption = MENU_PLAY, // default
         .combo = 0,
         .maxCombo = 0,
 
@@ -158,11 +159,9 @@ void UpdateGame(Game* game)
 
     switch(game->state)
     {
+        case MAIN_MENU:
         case TUTORIAL:
-            if (IsKeyPressed(KEY_ENTER))
-            {
-                game->state = PLAYING;
-            }
+            UpdateMainMenu(game);
         break;
 
         case PLAYING:
@@ -255,28 +254,10 @@ void DrawGame(Game game)
 
         switch(game.state)
         {
+            case MAIN_MENU:
             case TUTORIAL:
-            {
-                const char* controls[] = {
-                    "LEFT/RIGHT - Move Paddle",
-                    "SHIFT - Dash",
-                    "SPACE - Shoot",
-                    "Press ENTER to Play"
-                };
-
-                int startY = game.screenHeight / 3;
-
-                for (int i = 0; i < 4; i++)
-                {
-                    int textWidth = MeasureText(controls[i], 30);
-
-                    DrawText(controls[i],
-                            game.screenWidth/2 - textWidth/2,
-                            startY + i * 50,
-                            30,
-                            WHITE);
-                }
-            } break;
+                DrawMainMenu(game);
+            break;
 
             case PLAYING:
             {
@@ -326,6 +307,7 @@ void DrawGame(Game game)
                 // Draw score
                 char scoreText[32];
                 sprintf(scoreText, "Score: %d", game.player.score);
+
                 DrawText(scoreText,
                     PADDING_SIDE,
                     PADDING_TOP,
@@ -336,6 +318,7 @@ void DrawGame(Game game)
                 char livesText[32];
                 sprintf(livesText, "Lives: %d", game.player.lives);
                 int livesTextWidth = MeasureText(livesText, FONT_SIZE);
+
                 DrawText(livesText,
                     game.screenWidth - livesTextWidth - PADDING_SIDE,
                     PADDING_TOP,

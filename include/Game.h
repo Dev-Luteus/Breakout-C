@@ -6,14 +6,7 @@
 #include "Block.h"
 #include "BlocksManager.h"
 #include "PowerUp.h"
-
-typedef enum GameState
-{
-    TUTORIAL,
-    PLAYING,
-    GAME_OVER,
-    WIN
-} GameState;
+#include "Core.h"
 
 typedef struct Game
 {
@@ -21,6 +14,9 @@ typedef struct Game
     int screenHeight;
 
     GameState state;
+    MenuOption selectedOption;
+    bool inMenu;
+
     Player player;
     Ball ball;
     Block blocks[BLOCK_ROWS][BLOCK_COLUMNS];
@@ -31,8 +27,8 @@ typedef struct Game
     float lastScoreTimer;
     float dashEffect;
 
-    PowerUp powerUps[10];
     int powerUpCount;
+    PowerUp powerUps[10];
     PowerUpSpawnSystem spawnSystem;
 } Game;
 
@@ -43,7 +39,7 @@ void DrawGame(Game game);
 void HandleCollisions(Game* game);
 void ResetGame(Game* game);
 
-// Power ups
+// Power ups!
 void HandlePowerUpCollisions(Game* game);
 void UpdatePowerUps(Game* game);
 void DrawPowerUps(Game* game);

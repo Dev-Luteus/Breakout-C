@@ -11,7 +11,16 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 link_directories(${CMAKE_SOURCE_DIR}/lib)
 
 # Add the executable // RaylibGame old name
-add_executable(RaylibGame main.c Game.c Player.c Block.c BlocksManager.c Ball.c VectorMath.c PowerUp.c)
+add_executable(
+        RaylibGame
+        main.c Game.c
+        Player.c
+        Block.c BlocksManager.c
+        Ball.c
+        VectorMath.c
+        PowerUp.c
+        MainMenu.c
+)
 
 # Link Raylib library (and required Windows libraries)
 target_link_libraries(RaylibGame raylib winmm)

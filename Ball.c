@@ -2,19 +2,20 @@
 #include "Ball.h"
 #include <Player.h>
 #include <raymath.h>
+#include "VectorMath.h"
 
 Ball InitBall(Vector2 position)
 {
-    Ball ball =
-    {
+    Ball ball = {
         .position = position,
-        .direction = (Vector2){0, 0},
+        .direction = MyVector2Zero(),
         .radius = 10.0f,
         .speed = BALL_SPEED_MIN,
         .active = false,
         .trail = {0} // initialise to default values
     };
 
+    // Initialize trail positions to starting position
     for (int i = 0; i < TRAIL_LENGTH; i++)
     {
         ball.trail.positions[i] = position;
@@ -36,8 +37,11 @@ void UpdateBall(Ball* ball, float deltaTime, int screenWidth, int screenHeight)
     ball->trail.positions[ball->trail.currentIndex] = ball->position;
     ball->trail.currentIndex = (ball->trail.currentIndex + 1) % TRAIL_LENGTH;
 
-    Vector2 movement = Vector2Scale(ball->direction, ball->speed * deltaTime);
-    ball->position = Vector2Add(ball->position, movement);
+    // Movement vector: direction * speed * time
+    Vector2 movement = MyVector2Scale(ball->direction, ball->speed * deltaTime);
+
+    // Update position using vector addition
+    ball->position = MyVector2Add(ball->position, movement);
 
     // Bounce walls
     if (ball->position.x - ball->radius <= 0)
@@ -82,7 +86,7 @@ void AdjustBallDirection(Ball* ball)
         ball->direction.x = (ball->direction.x >= 0 ? MIN_HORIZONTAL : -MIN_HORIZONTAL);
     }
 
-    ball->direction = Vector2Normalize(ball->direction);
+    ball->direction = MyVector2Normalize(ball->direction);
 }
 
 void DrawBall(Ball ball)
@@ -95,11 +99,12 @@ void DrawBall(Ball ball)
         for (int i = 0; i < TRAIL_LENGTH; i++)
         {
             // Calculate position along the trail
-            Vector2 trailPos = Vector2Subtract(prevPos,
-                Vector2Scale(ball.direction, i * TRAIL_SPACING));
+            Vector2 trailPos = MyVector2Subtract(prevPos,
+                MyVector2Scale(ball.direction, i * TRAIL_SPACING));
 
             // Fade from white to blue!
             float alpha = (float)(TRAIL_LENGTH - i) / TRAIL_LENGTH;
+
             Color trailColor = {
                 255,                                   // R
                 255 * alpha,                           // G
@@ -120,22 +125,20 @@ void ShootBall(Ball* ball, Vector2 startPosition, Vector2 direction, Player play
 {
     if (!ball->active)
     {
-        Vector2 offsetDirection = {0, -1};
+        Vector2 offsetDirection = MyVector2Create(0, -1);
 
         if (IsKeyDown(KEY_RIGHT))
         {
-            offsetDirection.x = 0.4f;
-            offsetDirection.y = -1.0f;
+            offsetDirection = MyVector2Create(0.4f, -1.0f);
         }
         else if (IsKeyDown(KEY_LEFT))
         {
-            offsetDirection.x = -0.4f;
-            offsetDirection.y = -1.0f;
+            offsetDirection = MyVector2Create(-0.4f, -1.0f);
         }
         else
         {
-            offsetDirection.x = GetRandomValue(-15, 15) / 100.0f;
-            offsetDirection.y = -1.0f;
+            float randomX = GetRandomValue(-15, 15) / 100.0f;
+            offsetDirection = MyVector2Create(randomX, -1.0f);
         }
 
         ball->speed = BALL_SPEED_MIN;

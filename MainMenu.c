@@ -1,8 +1,12 @@
 ﻿#include "MainMenu.h"
+
+#include <math.h>
 #include <raylib.h>
 
 void UpdateMainMenu(Game* game)
 {
+    game->menuArrowTimer += GetFrameTime() * 12.0f;
+
     if (game->state == TUTORIAL)
     {
         if (IsKeyPressed(KEY_ENTER))
@@ -80,8 +84,11 @@ void DrawMainMenu(Game game)
         "QUIT"
     };
 
+    // Calculate arrow opacity (0-1) using sine wave
+    float arrowAlpha = (sinf(game.menuArrowTimer) + 1.0f) * 0.5f;
     const int spacing = 50;
     const int arrowSpacing = 20;
+
 
     const Vector2 menuStart =
     {
@@ -105,17 +112,21 @@ void DrawMainMenu(Game game)
 
         if (i == game.selectedOption)
         {
+            // Create pulsing arrow color
+            Color arrowColor = GREEN;
+            arrowColor.a = (unsigned char)(255 * arrowAlpha);
+
             DrawText(">",
                 menuStart.x - textWidth/2 - arrowSpacing,
                 menuStart.y + i * spacing,
                 FONT_SIZE,
-                GREEN);
+                arrowColor);
 
             DrawText("<",
                 menuStart.x + textWidth/2 + arrowSpacing - 10,
                 menuStart.y + i * spacing,
                 FONT_SIZE,
-                GREEN);
+                arrowColor);
         }
 
         // Menu options

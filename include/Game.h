@@ -17,6 +17,7 @@ typedef struct Game
     MenuOption selectedOption;
     bool inMenu;
     bool shouldClose;
+    float menuArrowTimer;
 
     Player player;
     Ball ball;

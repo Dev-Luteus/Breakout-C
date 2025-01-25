@@ -13,7 +13,8 @@ Ball InitBall(Vector2 position)
         .speed = BALL_SPEED_MIN,
         .active = false,
         .trail = {0}, // initialise to default values
-        .damageMultiplier = 1
+        .damageMultiplier = 1,
+        .currentColor = WHITE
     };
 
     // Initialize trail positions to starting position
@@ -103,21 +104,31 @@ void DrawBall(Ball ball)
             Vector2 trailPos = MyVector2Subtract(prevPos,
                 MyVector2Scale(ball.direction, i * TRAIL_SPACING));
 
-            // Fade from white to blue!
             float alpha = (float)(TRAIL_LENGTH - i) / TRAIL_LENGTH;
 
-            Color trailColor = {
-                255,                                   // R
-                255 * alpha,                           // G
-                255,                                   // B
-                (unsigned char)(alpha * 100)
-            };
+            Color trailColor;
+
+            if (ball.damageMultiplier > 1)
+            {
+                trailColor = (Color){
+                    255,                          // R
+                    (unsigned char)(255 * alpha), // G - Fading orange
+                    0,                            // B
+                    (unsigned char)(alpha * 100)  // A
+                };
+            }
+            else
+            {
+                // Normal trail color based on ball's current color
+                trailColor = ball.currentColor;
+                trailColor.a = (unsigned char)(alpha * 100);
+            }
 
             DrawCircleV(trailPos, ball.radius * (0.8f + (0.2f * alpha)), trailColor);
             prevPos = trailPos;
         }
 
-        DrawCircleV(ball.position, ball.radius, WHITE);
+        DrawCircleV(ball.position, ball.radius, ball.currentColor);
     }
 }
 

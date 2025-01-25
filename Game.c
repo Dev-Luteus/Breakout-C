@@ -18,6 +18,7 @@ Game InitGame(int width, int height)
 
         .state = MAIN_MENU,
         .selectedOption = MENU_PLAY, // default
+        .menuArrowTimer = 0.0f,
         .combo = 0,
         .maxCombo = 0,
 

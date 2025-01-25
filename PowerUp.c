@@ -70,7 +70,8 @@ PowerUp CreatePowerUp(Vector2 position, PowerUpType type, float duration)
         .type = type,
         .duration = duration,
         .remainingDuration = duration,
-        .wasPickedUp = false
+        .wasPickedUp = false,
+        .pulseTimer = 0
     };
 
     // Assign color based on powerup type
@@ -120,6 +121,7 @@ void UpdatePowerUp(PowerUp* powerUp, float deltaTime)
     }
 
     powerUp->position.y += powerUp->velocity.y * deltaTime;
+    powerUp->pulseTimer += deltaTime * 5.0f;
 }
 
 // Here we apply our powerup effect to our player
@@ -167,6 +169,8 @@ void ApplyPowerUpEffect(PowerUp* powerUp, Player* player, Game* game)
             game->ball.damageMultiplier = PU_DAMAGE_MULTIPLIER;
             powerUp->duration = PU_DAMAGE_DURATION;
             powerUp->active = true;
+            game->ball.currentColor = PLAYER_COLOR;
+            game->ball.radius += 2;
         break;
     }
 }
@@ -295,6 +299,8 @@ void UpdatePowerUps(Game* game)
 
                     case POWERUP_DAMAGE:
                         game->ball.damageMultiplier = 1;
+                        game->ball.radius -= 2;
+                        game->ball.currentColor = WHITE;
                     break;
                 }
 
@@ -326,11 +332,15 @@ void DrawPowerUp(PowerUp powerUp)
         return;
     }
 
+    float alpha = 0.7f + (sinf(powerUp.pulseTimer) * 0.3f);
+    Color pulsingColor = powerUp.color;
+    pulsingColor.a = (unsigned char)(255 * alpha);
+
     // Outer circle!
-    DrawCircleV(powerUp.position, powerUp.radius, powerUp.color);
+    DrawCircleV(powerUp.position, powerUp.radius, pulsingColor);
 
     // Inner circle!
-    DrawCircleV(powerUp.position, powerUp.radius * 0.55f, WHITE);
+    DrawCircleV(powerUp.position, powerUp.radius * 0.5f, WHITE);
 
     // Here we try to draw an ICON for each type of power up
     const char* text;

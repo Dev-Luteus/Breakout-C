@@ -42,6 +42,7 @@ typedef struct
     Vector2 velocity;
     float radius;
     bool active;
+
     PowerUpType type;
     Color color;
 
@@ -49,6 +50,8 @@ typedef struct
     float remainingDuration;
     bool wasPickedUp;
     double startTime; // When!
+
+    float pulseTimer;
 } PowerUp;
 
 typedef struct

@@ -1,11 +1,21 @@
 ﻿#include "MainMenu.h"
-
 #include <math.h>
 #include <raylib.h>
 
 void UpdateMainMenu(Game* game)
 {
     game->menuArrowTimer += GetFrameTime() * 12.0f;
+
+    if (game->state == LEADERBOARD)
+    {
+        if (IsKeyPressed(KEY_Q))
+        {
+            game->state = MAIN_MENU;
+            game->inMenu = true;
+            game->selectedOption = MENU_PLAY;
+        }
+        return;
+    }
 
     if (game->state == TUTORIAL)
     {
@@ -54,7 +64,8 @@ void UpdateMainMenu(Game* game)
             break;
 
             case MENU_LEADERBOARD:
-                // TODO: Implement leaderboard
+                game->state = LEADERBOARD;
+                game->inMenu = true;
             break;
 
             case MENU_TUTORIAL:
@@ -73,6 +84,12 @@ void DrawMainMenu(Game game)
     if (game.state == TUTORIAL)
     {
         DrawTutorial(game);
+        return;
+    }
+
+    if (game.state == LEADERBOARD)
+    {
+        DrawLeaderboardScreen(&game.leaderboard, game.screenWidth, game.screenHeight);
         return;
     }
 

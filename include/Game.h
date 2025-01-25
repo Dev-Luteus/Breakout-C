@@ -7,6 +7,7 @@
 #include "BlocksManager.h"
 #include "PowerUp.h"
 #include "Core.h"
+#include "Leaderboard.h"
 
 typedef struct Game
 {
@@ -35,6 +36,8 @@ typedef struct Game
 
     float timeScale;
     float normalTimeScale;
+
+    Leaderboard leaderboard;
 } Game;
 
 // Core!

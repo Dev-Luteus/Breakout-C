@@ -30,7 +30,9 @@ Game InitGame(int width, int height)
         .spawnSystem = InitPowerUpSpawnSystem(),
 
         .timeScale = 1.0f,
-        .normalTimeScale = 1.0f
+        .normalTimeScale = 1.0f,
+
+        .leaderboard = InitLeaderboard()
     };
 
     // Player, Ball, Blocks
@@ -161,6 +163,7 @@ void UpdateGame(Game* game)
     {
         case MAIN_MENU:
         case TUTORIAL:
+        case LEADERBOARD:
             UpdateMainMenu(game);
         break;
 
@@ -202,6 +205,7 @@ void UpdateGame(Game* game)
 
                     if (game->player.lives <= 0)
                     {
+                        AddLeaderboardEntry(&game->leaderboard, game->player.score, game->maxCombo);
                         game->state = GAME_OVER;
                     }
                 }
@@ -219,6 +223,7 @@ void UpdateGame(Game* game)
             // Check win condition
             if (AreAllBlocksDestroyed(game->blocks))
             {
+                AddLeaderboardEntry(&game->leaderboard, game->player.score, game->maxCombo);
                 game->state = WIN;
             }
 
@@ -259,6 +264,7 @@ void DrawGame(Game game)
         {
             case MAIN_MENU:
             case TUTORIAL:
+            case LEADERBOARD:
                 DrawMainMenu(game);
             break;
 

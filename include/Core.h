@@ -5,6 +5,7 @@ typedef enum GameState
 {
     MAIN_MENU,
     TUTORIAL,
+    LEADERBOARD,
     PLAYING,
     GAME_OVER,
     WIN

@@ -20,6 +20,8 @@ add_executable(
         VectorMath.c
         PowerUp.c
         MainMenu.c
+        include/Leaderboard.h
+        Leaderboard.c
 )
 
 # Link Raylib library (and required Windows libraries)

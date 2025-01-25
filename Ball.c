@@ -12,7 +12,8 @@ Ball InitBall(Vector2 position)
         .radius = 10.0f,
         .speed = BALL_SPEED_MIN,
         .active = false,
-        .trail = {0} // initialise to default values
+        .trail = {0}, // initialise to default values
+        .damageMultiplier = 1
     };
 
     // Initialize trail positions to starting position

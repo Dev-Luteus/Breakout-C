@@ -28,6 +28,7 @@ typedef struct
 
     bool isGhost;
     Color currentColor;
+    int damageMultiplier;
 } Ball;
 
 Ball InitBall(Vector2 position);

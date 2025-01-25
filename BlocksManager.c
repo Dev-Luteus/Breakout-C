@@ -122,7 +122,7 @@ bool CheckBlockCollision(Block* block, Ball* ball)
     if (distanceSquared <= (ball->radius * ball->radius))
     {
         // Reduce block life
-        block->lives--;
+        block->lives -= ball->damageMultiplier;
 
         if (block->lives <= 0)
         {

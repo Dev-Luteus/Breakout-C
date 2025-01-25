@@ -98,6 +98,11 @@ PowerUp CreatePowerUp(Vector2 position, PowerUpType type, float duration)
             powerUp.duration = PU_TIMEWARP_DURATION;
         break;
 
+        case POWERUP_DAMAGE:
+            powerUp.color = PU_DAMAGE_COLOR;
+            powerUp.duration = PU_DAMAGE_DURATION;
+        break;
+
         default:
             powerUp.color = WHITE;
         break;
@@ -155,6 +160,12 @@ void ApplyPowerUpEffect(PowerUp* powerUp, Player* player, Game* game)
         case POWERUP_TIMEWARP:
             game->timeScale = PU_TIMEWARP_MULTIPLIER;
             powerUp->duration = PU_TIMEWARP_DURATION;
+            powerUp->active = true;
+        break;
+
+        case POWERUP_DAMAGE:
+            game->ball.damageMultiplier = 2;
+            powerUp->duration = PU_DAMAGE_DURATION;
             powerUp->active = true;
         break;
     }
@@ -281,6 +292,10 @@ void UpdatePowerUps(Game* game)
                     case POWERUP_TIMEWARP:
                         game->timeScale = game->normalTimeScale;
                     break;
+
+                    case POWERUP_DAMAGE:
+                        game->ball.damageMultiplier = 1;
+                    break;
                 }
 
                 powerUp->active = false;
@@ -324,19 +339,31 @@ void DrawPowerUp(PowerUp powerUp)
     {
         case POWERUP_LIFE:
             text = "+";
-            break;
+        break;
 
         case POWERUP_SPEED:
             text = "S";
-            break;
+        break;
 
         case POWERUP_GROWTH:
             text = "G";
-            break;
+        break;
+
+        case POWERUP_GHOST:
+            text = "¤";
+        break;
+
+        case POWERUP_TIMEWARP:
+            text = "T";
+        break;
+
+        case POWERUP_DAMAGE:
+            text = "D";
+        break;
 
         default:
             text = "?";
-            break;
+        break;
     }
 
     int fontSize = powerUp.radius;
@@ -385,6 +412,14 @@ void DrawPowerUpTimers(Game game)
 
                 case POWERUP_GROWTH:
                     text = "G";
+                break;
+
+                case POWERUP_GHOST:
+                    text = "¤";
+                break;
+
+                case POWERUP_TIMEWARP:
+                    text = "T";
                 break;
 
                 default:

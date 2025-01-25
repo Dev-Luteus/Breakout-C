@@ -30,6 +30,9 @@ typedef struct Game
     int powerUpCount;
     PowerUp powerUps[10];
     PowerUpSpawnSystem spawnSystem;
+
+    float timeScale;
+    float normalTimeScale;
 } Game;
 
 // Core!

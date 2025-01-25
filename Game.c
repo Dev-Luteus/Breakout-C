@@ -26,7 +26,10 @@ Game InitGame(int width, int height)
         .dashEffect = 0.0f,
 
         .powerUpCount = 0,
-        .spawnSystem = InitPowerUpSpawnSystem()
+        .spawnSystem = InitPowerUpSpawnSystem(),
+
+        .timeScale = 1.0f,
+        .normalTimeScale = 1.0f
     };
 
     // Player, Ball, Blocks
@@ -75,7 +78,8 @@ void HandleCollisions (Game* game)
         float reflectionAngle = hitPosition * maxAngle;
 
         // Here we calculate our balls new direction on collision: sin hori, cos verti,
-        Vector2 newDirection = MyVector2Create(
+        Vector2 newDirection = MyVector2Create
+        (
             sinf(reflectionAngle),
             -fabs(cosf(reflectionAngle))  // Force upward
         );
@@ -141,6 +145,7 @@ void HandleCollisions (Game* game)
                         }
                     }
                 }
+                return; // Return early to prevent multiple block hits per frame
             }
         }
     }
@@ -148,7 +153,7 @@ void HandleCollisions (Game* game)
 
 void UpdateGame(Game* game)
 {
-    float deltaTime = GetFrameTime();
+    float deltaTime = GetFrameTime() * game->timeScale;
     game->spawnSystem.cooldownTimer -= deltaTime; // power ups
 
     switch(game->state)
@@ -220,6 +225,7 @@ void UpdateGame(Game* game)
             for (int i = 0; i < PU_MAX_COUNT; i++)
             {
                 PowerUp* powerUp = &game->powerUps[i];
+
                 if (powerUp->active && powerUp->wasPickedUp)
                 {
                     printf("Active powerup %d: %.2f remaining, active=%d, picked=%d\n",
@@ -344,6 +350,8 @@ void ResetGame(Game* game)
     // Reset power-ups to not save them through retries
     game->powerUpCount = 0;
     game->spawnSystem = InitPowerUpSpawnSystem(); // Reset spawn system (timers etc)
+
+    game->timeScale = game->normalTimeScale;
 
     for (int i = 0; i < 10; i++)
     {

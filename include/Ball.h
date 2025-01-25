@@ -22,8 +22,12 @@ typedef struct
     Vector2 direction;
     float radius;
     float speed;
+
     bool active;
     BallTrail trail;
+
+    bool isGhost;
+    Color currentColor;
 } Ball;
 
 Ball InitBall(Vector2 position);

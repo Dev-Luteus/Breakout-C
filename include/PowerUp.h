@@ -7,20 +7,27 @@
 #define PU_LIFE_COLOR (Color){0x8B, 0x1B, 0x52, 0xFF}   // #8B1B52
 #define PU_SPEED_COLOR (Color){0xEC, 0xED, 0xAB, 0xFF}  // #ECEDAB
 #define PU_GROWTH_COLOR (Color){0xAC, 0xED, 0xAB, 0xFF} // #ACEDAB
+#define PU_GHOST_COLOR (Color){0x1B, 0x8B, 0x89, 0xFF}    // #1b8b89
+#define PU_TIMEWARP_COLOR (Color){0x7E, 0x1B, 0x8B, 0xFF} // #7e1b8b
 
 #define PU_SPEED_DURATION 10.0
 #define PU_GROWTH_DURATION 10.0
 #define PU_DEFAULT_DURATION 0.0
+#define PU_GHOST_DURATION 1.0f
+#define PU_TIMEWARP_DURATION 5.0f
 
 #define PU_MAX_COUNT 10
 #define PU_SPEED_MULTIPLIER 1.25f
 #define PU_GROWTH_MULTIPLIER 1.25f
+#define PU_TIMEWARP_MULTIPLIER 0.7f
 
 typedef enum
 {
     POWERUP_LIFE,
     POWERUP_SPEED,
     POWERUP_GROWTH,
+    POWERUP_GHOST,
+    POWERUP_TIMEWARP,
     POWERUP_COUNT // Active array!
 } PowerUpType;
 

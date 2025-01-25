@@ -13,7 +13,7 @@ PowerUpSpawnSystem InitPowerUpSpawnSystem(void)
         .baseChance = 0.05f,
         .comboMultiplier = 0.05f,      // % per combo
         .scoreMultiplier = 0.10f,      // % per 1000
-        .maxChance = 0.25f,            // % cap
+        .maxChance = 0.30f,            // % cap
         .cooldownTimer = 0.0f,
         .cooldownDuration = 3.0f,      // Second cooldown
         .currentChance = 0.0f
@@ -64,7 +64,7 @@ PowerUp CreatePowerUp(Vector2 position, PowerUpType type, float duration)
     PowerUp powerUp =
     {
         .position = position,
-        .velocity = (Vector2){0, 500},  // Pixel p/s
+        .velocity = MyVector2Create(0, 500),  // Pixel p/s
         .radius = 24,
         .active = true,
         .type = type,
@@ -88,6 +88,16 @@ PowerUp CreatePowerUp(Vector2 position, PowerUpType type, float duration)
             powerUp.color = PU_GROWTH_COLOR;
         break;
 
+        case POWERUP_GHOST:
+            powerUp.color = PU_GHOST_COLOR;
+            powerUp.duration = PU_GHOST_DURATION;
+        break;
+
+        case POWERUP_TIMEWARP:
+            powerUp.color = PU_TIMEWARP_COLOR;
+            powerUp.duration = PU_TIMEWARP_DURATION;
+        break;
+
         default:
             powerUp.color = WHITE;
         break;
@@ -108,7 +118,7 @@ void UpdatePowerUp(PowerUp* powerUp, float deltaTime)
 }
 
 // Here we apply our powerup effect to our player
-void ApplyPowerUpEffect(PowerUp* powerUp, Player* player)
+void ApplyPowerUpEffect(PowerUp* powerUp, Player* player, Game* game)
 {
     powerUp->wasPickedUp = true;
     powerUp->startTime = GetTime();
@@ -124,17 +134,28 @@ void ApplyPowerUpEffect(PowerUp* powerUp, Player* player)
         case POWERUP_SPEED:
             player->speed = player->baseSpeed * PU_SPEED_MULTIPLIER;
             powerUp->duration = PU_SPEED_DURATION;
-            powerUp->active = true;  // Keep active to track duration
-            printf("Speed increased to %.2f for %.1f seconds\n",
-               player->speed, powerUp->duration);
+            powerUp->active = true;  // track duration
+            player->speed, powerUp->duration;
         break;
 
         case POWERUP_GROWTH:
             player->width = player->baseWidth * PU_GROWTH_MULTIPLIER;
             powerUp->duration = PU_GROWTH_DURATION;
-            powerUp->active = true;  // Keep active to track duration
-            printf("Width increased to %d for %.1f seconds\n",
-            player->width, powerUp->duration);
+            powerUp->active = true;  // track duration
+            player->width, powerUp->duration;
+        break;
+
+        case POWERUP_GHOST:
+            game->ball.isGhost = true;
+            game->ball.currentColor = PU_GHOST_COLOR;
+            powerUp->duration = PU_GHOST_DURATION;
+            powerUp->active = true;
+        break;
+
+        case POWERUP_TIMEWARP:
+            game->timeScale = PU_TIMEWARP_MULTIPLIER;
+            powerUp->duration = PU_TIMEWARP_DURATION;
+            powerUp->active = true;
         break;
     }
 }
@@ -177,7 +198,7 @@ void HandlePowerUpCollisions(Game* game)
 
             if (!alreadyActive)
             {
-                ApplyPowerUpEffect(powerUp, &game->player);
+                ApplyPowerUpEffect(powerUp, &game->player, game);
                 powerUp->active = true;      // Keep the power-up active for effect
                 powerUp->wasPickedUp = true; // Mark as picked up
                 game->powerUpCount--;
@@ -221,7 +242,7 @@ void UpdatePowerUps(Game* game)
 
         if (!powerUp->wasPickedUp)
         {
-            UpdatePowerUp(powerUp, deltaTime); // Update falling
+            UpdatePowerUp(powerUp, deltaTime * game->timeScale); // Update falling
 
             // Check for killZone
             if (powerUp->position.y > game->screenHeight)
@@ -236,7 +257,7 @@ void UpdatePowerUps(Game* game)
             powerUp->remainingDuration = powerUp->duration - elapsedTime;
 
             printf("PowerUp type %d: %.2f seconds remaining\n",
-                   powerUp->type, powerUp->remainingDuration);
+            powerUp->type, powerUp->remainingDuration);
 
             if (powerUp->remainingDuration <= 0)
             {
@@ -244,14 +265,21 @@ void UpdatePowerUps(Game* game)
                 {
                     case POWERUP_SPEED:
                         game->player.speed = game->player.baseSpeed;
-                        printf("Speed power-up expired, reset to: %.2f\n",
-                           game->player.baseSpeed);
+                        game->player.baseSpeed;
                     break;
 
                     case POWERUP_GROWTH:
                         game->player.width = game->player.baseWidth;
-                        printf("Growth power-up expired, reset to: %d\n",
-                           game->player.baseWidth);
+                        game->player.baseWidth;
+                    break;
+
+                    case POWERUP_GHOST:
+                        game->ball.isGhost = false;
+                        game->ball.currentColor = WHITE;
+                    break;
+
+                    case POWERUP_TIMEWARP:
+                        game->timeScale = game->normalTimeScale;
                     break;
                 }
 
@@ -315,11 +343,11 @@ void DrawPowerUp(PowerUp powerUp)
     int textWidth = MeasureText(text, fontSize);
     int textHeight = fontSize;
 
-    Vector2 textPosition =
-    {
+    Vector2 textPosition = MyVector2Create
+    (
         powerUp.position.x - textWidth / 2,
         powerUp.position.y - textHeight / 2
-    };
+    );
 
     DrawText(text, textPosition.x, textPosition.y, fontSize, BLACK);
 }

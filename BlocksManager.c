@@ -69,14 +69,46 @@ bool CheckBlockCollision(Block* block, Ball* ball)
         return false;
     }
 
+    // Damage but don't collide!
+    if (ball->isGhost)
+    {
+        Rectangle blockRect = {
+            block->position.x - ball->radius,
+            block->position.y - ball->radius,
+            block->width + (ball->radius * 2),
+            block->height + (ball->radius * 2)
+        };
+
+        if (CheckCollisionCircleRec(ball->position, ball->radius, blockRect))
+        {
+            block->lives--;
+
+            if (block->lives <= 0)
+            {
+                block->active = false;
+            }
+
+            return true;
+        }
+        return false;
+    }
+
+    // To prevent the ball from going through gaps it shouldn't, we expand the blocsk radius
+    Rectangle expandedBlock = {
+        block->position.x - ball->radius,
+        block->position.y - ball->radius,
+        block->width + (ball->radius * 2),
+        block->height + (ball->radius * 2)
+    };
+
     /* Here we find the closest point on our block, relevant to the balls center
      * This closest points, then determines where the ball collides with the block.
      */
-    float closestX = fmaxf(block->position.x,
-                            fminf(ball->position.x, block->position.x + block->width));
+    float closestX = fmaxf(expandedBlock.x,
+                          fminf(ball->position.x, expandedBlock.x + expandedBlock.width));
 
-    float closestY = fmaxf(block->position.y,
-                          fminf(ball->position.y, block->position.y + block->height));
+    float closestY = fmaxf(expandedBlock.y,
+                          fminf(ball->position.y, expandedBlock.y + expandedBlock.height));
 
     /* Here, we then calculate the distance between the closest point, and our ball's center
      * We do this to get the squared distance between the two points, which we then use to:
@@ -91,6 +123,7 @@ bool CheckBlockCollision(Block* block, Ball* ball)
     {
         // Reduce block life
         block->lives--;
+
         if (block->lives <= 0)
         {
             block->active = false;
@@ -121,14 +154,16 @@ bool CheckBlockCollision(Block* block, Ball* ball)
         }
 
         // Add randomization to prevent repetitive patterns
-        Vector2 randomOffset = MyVector2Create(
+        Vector2 randomOffset = MyVector2Create
+        (
             (float)(GetRandomValue(-5, 5)) / 100.0f,
             0
         );
         ball->direction = MyVector2Add(ball->direction, randomOffset);
         ball->direction = MyVector2Normalize(ball->direction);
 
-        ball->speed = Clamp(
+        ball->speed = Clamp
+        (
             ball->speed * 1.05f,
             BALL_SPEED_MIN,
             BALL_SPEED_MAX
@@ -146,7 +181,10 @@ bool AreAllBlocksDestroyed(Block blocks[BLOCK_ROWS][BLOCK_COLUMNS])
     {
         for (int col = 0; col < BLOCK_COLUMNS; col++)
         {
-            if (blocks[row][col].active) return false;
+            if (blocks[row][col].active)
+            {
+                return false;
+            }
         }
     }
     return true;

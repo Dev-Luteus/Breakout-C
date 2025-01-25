@@ -32,11 +32,11 @@ Game InitGame(int width, int height)
     // Player, Ball, Blocks
     game.player = InitPlayer(width, height);
 
-    Vector2 initialBallPos =
-    {
+    Vector2 initialBallPos = MyVector2Create(
         game.player.position.x + game.player.width / 2,
         game.player.position.y - 20
-    };
+    );
+
     game.ball = InitBall(initialBallPos);
 
     InitBlocks(game.blocks, width, height);
@@ -75,18 +75,12 @@ void HandleCollisions (Game* game)
         float reflectionAngle = hitPosition * maxAngle;
 
         // Here we calculate our balls new direction on collision: sin hori, cos verti,
-        game->ball.direction.x = sinf(reflectionAngle);
-        game->ball.direction.y = -fabs(cosf(reflectionAngle));  // Force upward
-
-        // Here, we normalize our direction vector by taking its total length X and Y / 2
-        float length = sqrtf
-        (
-            game->ball.direction.x * game->ball.direction.x +
-            game->ball.direction.y * game->ball.direction.y
+        Vector2 newDirection = MyVector2Create(
+            sinf(reflectionAngle),
+            -fabs(cosf(reflectionAngle))  // Force upward
         );
 
-        game->ball.direction.x /= length;
-        game->ball.direction.y /= length;
+        game->ball.direction = MyVector2Normalize(newDirection);
     }
 
     // Give score to the player on ball/block collision and combo!
@@ -111,11 +105,11 @@ void HandleCollisions (Game* game)
 
                 if (CheckPowerUpSpawn(&game->spawnSystem, game->combo, game->player.score, GetFrameTime()))
                 {
-                    Vector2 spawnPosition =
-                    {
+                    Vector2 spawnPosition = MyVector2Create
+                    (
                         game->blocks[row][col].position.x + game->blocks[row][col].width / 2,
                         game->blocks[row][col].position.y + game->blocks[row][col].height / 2
-                    };
+                    );
 
                     // Lazy so using rand() to randomly select a power-up!
                     PowerUpType type = rand() % POWERUP_COUNT;
@@ -177,12 +171,13 @@ void UpdateGame(Game* game)
             // Ball shooting
             if (IsKeyPressed(KEY_SPACE) && !game->ball.active)
             {
-                Vector2 startPosition = (Vector2){
+                Vector2 startPosition = MyVector2Create(
                     game->player.position.x + game->player.width / 2,
                     game->player.position.y - game->ball.radius
-                };
+                );
 
-                ShootBall(&game->ball, startPosition, (Vector2){0, -1}, game->player);
+                Vector2 initialDirection = MyVector2Create(0, -1);
+                ShootBall(&game->ball, startPosition, initialDirection, game->player);
             }
 
             // Update ball and handle screen collisions!
@@ -208,10 +203,11 @@ void UpdateGame(Game* game)
             else // Ball is not active
             {
                 // Update ball position to follow player when not launched
-                game->ball.position = (Vector2){
+                game->ball.position = MyVector2Create
+                (
                     game->player.position.x + game->player.width / 2,
                     game->player.position.y - game->ball.radius
-                };
+                );
             }
 
             // Check win condition

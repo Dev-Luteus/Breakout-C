@@ -1,10 +1,11 @@
 ﻿#include "Player.h"
 #include <raymath.h>
+#include <VectorMath.h>
 
 Player InitPlayer(int width, int height)
 {
     Player player = {0};  // Zero-initialize all fields
-    player.position = (Vector2){ width / 2 - 25, height - 50 };
+    player.position = MyVector2Create(width / 2 - 25, height - 50);
     player.baseSpeed = 1000.0f;
     player.speed = 1000.0f;
     player.baseWidth = 100;

@@ -9,7 +9,7 @@ Ball InitBall(Vector2 position)
     Ball ball = {
         .position = position,
         .direction = MyVector2Zero(),
-        .radius = 10.0f,
+        .radius = 12.0f,
         .speed = BALL_SPEED_MIN,
         .active = false,
         .trail = {0}, // initialise to default values

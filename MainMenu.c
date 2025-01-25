@@ -58,7 +58,7 @@ void UpdateMainMenu(Game* game)
             break;
 
             case MENU_QUIT:
-                CloseWindow();
+                game->shouldClose = true;
             break;
         }
     }
@@ -80,7 +80,6 @@ void DrawMainMenu(Game game)
         "QUIT"
     };
 
-    const int fontSize = 30;
     const int spacing = 50;
     const int arrowSpacing = 20;
 
@@ -91,32 +90,31 @@ void DrawMainMenu(Game game)
     };
 
     const char* title = "BREAKOUT-C";
-    const int titleFontSize = 60;
 
     DrawText(title,
-        game.screenWidth/2 - MeasureText(title, titleFontSize)/2,
+        game.screenWidth/2 - MeasureText(title, FONT_TITLE_SIZE)/2,
         menuStart.y - 100,
-        titleFontSize,
+        FONT_TITLE_SIZE,
         WHITE);
 
     // Draw menu options
     for (int i = 0; i < MENU_COUNT; i++)
     {
         Color optionColor = (i == game.selectedOption) ? GREEN : WHITE;
-        int textWidth = MeasureText(menuOptions[i], fontSize);
+        int textWidth = MeasureText(menuOptions[i], FONT_SIZE);
 
         if (i == game.selectedOption)
         {
             DrawText(">",
                 menuStart.x - textWidth/2 - arrowSpacing,
                 menuStart.y + i * spacing,
-                fontSize,
+                FONT_SIZE,
                 GREEN);
 
             DrawText("<",
                 menuStart.x + textWidth/2 + arrowSpacing - 10,
                 menuStart.y + i * spacing,
-                fontSize,
+                FONT_SIZE,
                 GREEN);
         }
 
@@ -124,14 +122,14 @@ void DrawMainMenu(Game game)
         DrawText(menuOptions[i],
             menuStart.x - textWidth/2,
             menuStart.y + i * spacing,
-            fontSize,
+            FONT_SIZE,
             optionColor);
     }
 
     // Menu control hints
     const char* controlsText = "Navigate: UP/DOWN/W/S  |  Select: ENTER  |  Back: Q";
     DrawText(controlsText,
-        game.screenWidth/2 - MeasureText(controlsText, 24)/2,
+        game.screenWidth/2 - MeasureText(controlsText, 26)/2,
         game.screenHeight - 40,
         24,
         LIGHTGRAY);
@@ -145,30 +143,35 @@ void DrawTutorial(Game game)
 
     // Draw title
     DrawText(title,
-        game.screenWidth/2 - MeasureText(title, titleFontSize)/2,
+        game.screenWidth/2 - MeasureText(title, titleFontSize)/2, //
         startY - 100,
         titleFontSize,
         WHITE);
 
     const char* controls[] =
     {
-        "LEFT/RIGHT - Move Paddle",
-        "SHIFT - Dash",
-        "SPACE - Shoot",
+        "LEFT/RIGHT",
+        "Move Paddle",
+        "",
+        "SHIFT",
+        "Dash",
+        "",
+        "SPACE",
+        "Shoot",
+        "",
         "Press Q to return to Menu",
         ""
     };
 
     const int arraySize = sizeof(controls) / sizeof(controls[0]);
-    const int fontSize = 30;
 
     for (int i = 0; i < arraySize; i++)
     {
-        int textWidth = MeasureText(controls[i], fontSize);
+        int textWidth = MeasureText(controls[i], FONT_SIZE);
         DrawText(controls[i],
                 game.screenWidth/2 - textWidth/2,
                 startY + i * 50,
-                fontSize,
+                FONT_SIZE,
                 WHITE);
     }
 }

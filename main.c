@@ -11,7 +11,7 @@ int main()
 
     Game game = InitGame(width, height);
 
-    while (!WindowShouldClose())
+    while ((!WindowShouldClose() && !game.shouldClose))
     {
         UpdateGame(&game);
         DrawGame(game);

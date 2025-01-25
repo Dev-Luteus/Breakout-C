@@ -64,7 +64,7 @@ PowerUp CreatePowerUp(Vector2 position, PowerUpType type, float duration)
     PowerUp powerUp =
     {
         .position = position,
-        .velocity = MyVector2Create(0, 500),  // Pixel p/s
+        .velocity = MyVector2Create(0, 650),  // Pixel p/s
         .radius = 24,
         .active = true,
         .type = type,
@@ -131,7 +131,7 @@ void ApplyPowerUpEffect(PowerUp* powerUp, Player* player, Game* game)
     switch(powerUp->type)
     {
         case POWERUP_LIFE:
-            player->lives++;
+            game->player.lives += PU_LIFE_AMOUNT;
             powerUp->duration = PU_DEFAULT_DURATION;
             powerUp->active = false;  // We do this for an immediate effect!
         break;
@@ -164,7 +164,7 @@ void ApplyPowerUpEffect(PowerUp* powerUp, Player* player, Game* game)
         break;
 
         case POWERUP_DAMAGE:
-            game->ball.damageMultiplier = 2;
+            game->ball.damageMultiplier = PU_DAMAGE_MULTIPLIER;
             powerUp->duration = PU_DAMAGE_DURATION;
             powerUp->active = true;
         break;
@@ -382,9 +382,9 @@ void DrawPowerUp(PowerUp powerUp)
 // To display our power ups, we're drawing a timer for each type as an indictator
 void DrawPowerUpTimers(Game game)
 {
-    const int timerHeight = 12;
-    const int timerWidth = 100;
-    const int padding = 15;
+    const int timerHeight = 14;
+    const int timerWidth = 120;
+    const int padding = 20;
     int activeTimers = 0;
 
     for (int i = 0; i < PU_MAX_COUNT; i++)
@@ -420,6 +420,10 @@ void DrawPowerUpTimers(Game game)
 
                 case POWERUP_TIMEWARP:
                     text = "T";
+                break;
+
+                case POWERUP_DAMAGE:
+                    text = "D";
                 break;
 
                 default:

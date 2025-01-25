@@ -50,11 +50,11 @@ void DrawBlocks(Block blocks[BLOCK_ROWS][BLOCK_COLUMNS])
                 char lives[2];
                 sprintf(lives, "%d", block.lives);
 
-                Vector2 textPos = (Vector2)
-                {
+                Vector2 textPos = MyVector2Create
+                (
                     block.position.x + block.width/2 - 5,
                     block.position.y + block.height/2 - 10
-                };
+                );
 
                 DrawText(lives, textPos.x, textPos.y, 20, BLACK);
             }
@@ -64,23 +64,32 @@ void DrawBlocks(Block blocks[BLOCK_ROWS][BLOCK_COLUMNS])
 
 bool CheckBlockCollision(Block* block, Ball* ball)
 {
-    if (!block->active) return false;
+    if (!block->active)
+    {
+        return false;
+    }
 
-    // Check collision between circle (ball) and rectangle (block)
+    /* Here we find the closest point on our block, relevant to the balls center
+     * This closest points, then determines where the ball collides with the block.
+     */
     float closestX = fmaxf(block->position.x,
-                          fminf(ball->position.x, block->position.x + block->width));
+                            fminf(ball->position.x, block->position.x + block->width));
 
     float closestY = fmaxf(block->position.y,
                           fminf(ball->position.y, block->position.y + block->height));
 
-    // Here we try to calculate the distance between the closest point and the circle center
+    /* Here, we then calculate the distance between the closest point, and our ball's center
+     * We do this to get the squared distance between the two points, which we then use to:
+     * Compare the squared distance to the squared radius of the ball, to determine if a collision occurred
+     */
     Vector2 closestPoint = MyVector2Create(closestX, closestY);
     Vector2 ballToClosest = MyVector2Subtract(closestPoint, ball->position);
     float distanceSquared = MyVector2DotProduct(ballToClosest, ballToClosest);
 
+    // Check if ball/block collision occurred (distance² ≤ radius²)
     if (distanceSquared <= (ball->radius * ball->radius))
     {
-        // Collision detected
+        // Reduce block life
         block->lives--;
         if (block->lives <= 0)
         {
@@ -91,12 +100,13 @@ bool CheckBlockCollision(Block* block, Ball* ball)
             block->color = GetBlockColor(block->lives);
         }
 
-        // Calculate exact collision normal
+        // Here we calculate a blocks center, to help determine which angle to reflect the ball
         Vector2 blockCenter = MyVector2Create(
             block->position.x + block->width/2,
             block->position.y + block->height/2
         );
 
+        // Here we normalize the distance relative to the block, and determine which side was hit
         Vector2 ballToBlock = MyVector2Subtract(ball->position, blockCenter);
         float dx = fabs(ballToBlock.x) / (block->width/2);
         float dy = fabs(ballToBlock.y) / (block->height/2);
@@ -110,7 +120,7 @@ bool CheckBlockCollision(Block* block, Ball* ball)
             ball->direction.y *= -1;
         }
 
-        // Add slight randomization
+        // Add randomization to prevent repetitive patterns
         Vector2 randomOffset = MyVector2Create(
             (float)(GetRandomValue(-5, 5)) / 100.0f,
             0
@@ -118,7 +128,6 @@ bool CheckBlockCollision(Block* block, Ball* ball)
         ball->direction = MyVector2Add(ball->direction, randomOffset);
         ball->direction = MyVector2Normalize(ball->direction);
 
-        // Speed boost
         ball->speed = Clamp(
             ball->speed * 1.05f,
             BALL_SPEED_MIN,

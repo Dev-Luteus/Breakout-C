@@ -1,13 +1,22 @@
 # ninja log v6
-1	183	7594614766294032	build.ninja	800bd49bc7a8b09a
-2	66	7594510437034952	CMakeFiles/RaylibGame.dir/main.c.obj	97fed9ada13ca7f
+1	183	7594671634156808	build.ninja	800bd49bc7a8b09a
 3	82	7594523785054825	CMakeFiles/RaylibGame.dir/Game.c.obj	fbbb0bb06aebacc9
+2	66	7594510437034952	CMakeFiles/RaylibGame.dir/main.c.obj	97fed9ada13ca7f
+59	165	7594524437695143	RaylibGame.exe	a833a5f82ef7136b
 13	115	7593710228788489	CMakeFiles/RaylibGame.dir/BlocksManager.c.obj	62f793c48a9fc4d5
 16	124	7593706064788994	CMakeFiles/RaylibGame.dir/Ball.c.obj	18f7445c4b57ff39
-59	165	7594524437695143	RaylibGame.exe	a833a5f82ef7136b
 10	91	7593710228747364	CMakeFiles/RaylibGame.dir/Block.c.obj	b22d9ebff446e17e
 3	83	7593711666008194	CMakeFiles/RaylibGame.dir/Player.c.obj	a9bf3978c2c95619
 3	67	7592715308487655	CMakeFiles/RaylibGame.dir/VectorMath.c.obj	5e234c906c382ab0
 2	14	7592712405020568	clean	f1c0810b4f0350db
 8	88	7594510437104322	CMakeFiles/RaylibGame.dir/PowerUp.c.obj	a77fa37f3b823c0e
 3	58	7594524437140740	CMakeFiles/RaylibGame.dir/MainMenu.c.obj	24c31a6a6ea4e529
+2	189	7594671634156808	build.ninja	800bd49bc7a8b09a
+9	95	7594671634442713	CMakeFiles/RaylibGame.dir/Block.c.obj	b22d9ebff446e17e
+3	95	7594671634380847	CMakeFiles/RaylibGame.dir/main.c.obj	97fed9ada13ca7f
+14	97	7594671634498770	CMakeFiles/RaylibGame.dir/VectorMath.c.obj	5e234c906c382ab0
+11	97	7594671634467345	CMakeFiles/RaylibGame.dir/BlocksManager.c.obj	62f793c48a9fc4d5
+21	98	7594671634568905	CMakeFiles/RaylibGame.dir/MainMenu.c.obj	24c31a6a6ea4e529
+17	112	7594671634523405	CMakeFiles/RaylibGame.dir/PowerUp.c.obj	a77fa37f3b823c0e
+6	112	7594671634417691	CMakeFiles/RaylibGame.dir/Game.c.obj	fbbb0bb06aebacc9
+112	232	7594671635478428	RaylibGame.exe	a833a5f82ef7136b

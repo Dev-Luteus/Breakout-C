@@ -250,6 +250,12 @@ void UpdateGame(Game* game)
             {
                 ResetGame(game);
             }
+            else if (IsKeyPressed(KEY_Q))
+            {
+                game->state = MAIN_MENU;
+                game->selectedOption = MENU_PLAY;
+                game->inMenu = true;
+            }
         break;
     }
 }
@@ -337,14 +343,68 @@ void DrawGame(Game game)
 
             case GAME_OVER:
             {
-                DrawText("GAME OVER", game.screenWidth/2 - 125, game.screenHeight/2, 40, RED);
-                DrawText("Press R to Restart", game.screenWidth/2 - 100, game.screenHeight/2 + 50, 20, WHITE);
+                const char* gameOverText = "GAME OVER";
+                const int titleFontSize = 50;
+                const int optionsFontSize = 34;
+                const int optionsSpacing = 50;
+
+                int gameOverWidth = MeasureText(gameOverText, titleFontSize);
+
+                DrawText(gameOverText,
+                    game.screenWidth/2 - gameOverWidth/2,
+                    game.screenHeight/2 - 80,
+                    titleFontSize,
+                    RED);
+
+                const char* restartText = "Press R to Restart";
+                const char* menuText = "Press Q for Menu";
+                int restartWidth = MeasureText(restartText, optionsFontSize);
+                int menuWidth = MeasureText(menuText, optionsFontSize);
+
+                DrawText(restartText,
+                    game.screenWidth/2 - restartWidth/2,
+                    game.screenHeight/2,
+                    optionsFontSize,
+                    WHITE);
+
+                DrawText(menuText,
+                    game.screenWidth/2 - menuWidth/2,
+                    game.screenHeight/2 + optionsSpacing,
+                    optionsFontSize,
+                    YELLOW);
             } break;
 
             case WIN:
             {
-                DrawText("YOU WIN!", game.screenWidth/2 - 100, game.screenHeight/2, 40, GREEN);
-                DrawText("Press R to Restart", game.screenWidth/2 - 100, game.screenHeight/2 + 50, 20, WHITE);
+                const char* winText = "YOU WIN!";
+                const int titleFontSize = 50;
+                const int optionsFontSize = 34;
+                const int optionsSpacing = 150;
+
+                int winWidth = MeasureText(winText, titleFontSize);
+
+                DrawText(winText,
+                    game.screenWidth/2 - winWidth/2,
+                    game.screenHeight/2 - 80,
+                    titleFontSize,
+                    GREEN);
+
+                const char* restartText = "Press R to Restart";
+                const char* menuText = "Press Q for Menu";
+                int restartWidth = MeasureText(restartText, optionsFontSize);
+                int menuWidth = MeasureText(menuText, optionsFontSize);
+
+                DrawText(restartText,
+                    game.screenWidth/2 - restartWidth/2,
+                    game.screenHeight/2,
+                    optionsFontSize,
+                    WHITE);
+
+                DrawText(menuText,
+                    game.screenWidth/2 - menuWidth/2,
+                    game.screenHeight/2 + optionsSpacing,
+                    optionsFontSize,
+                    YELLOW);
             } break;
         }
     }

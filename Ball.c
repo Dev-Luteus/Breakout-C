@@ -149,7 +149,7 @@ void ShootBall(Ball* ball, Vector2 startPosition, Vector2 direction, Player play
         }
         else
         {
-            float randomX = GetRandomValue(-15, 15) / 100.0f;
+            float randomX = GetRandomValue(-35, 35) / 100.0f;
             offsetDirection = MyVector2Create(randomX, -1.0f);
         }
 

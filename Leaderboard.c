@@ -95,27 +95,28 @@ void AddLeaderboardEntry(Leaderboard* leaderboard, int score, int maxCombo)
 
 void DrawLeaderboardScreen(const Leaderboard* leaderboard, int screenWidth, int screenHeight)
 {
-    // Here we calculate our total height!
+    // Calculate total height needed for the leaderboard
     const int rowSpacing = LB_FONT_SIZE + 20;
     const int totalRows = MAX_LEADERBOARD_ENTRIES;
     const int headerSpacing = LB_PADDING * 2;
     const int titleSpacing = LB_PADDING * 4;
 
     int totalHeight =
-        titleSpacing + // Top
-        (LB_FONT_SIZE * 2) + // Title
-        headerSpacing + // Title < - > headers
-        LB_FONT_SIZE +  // Header
-        headerSpacing + // Headers < - > entries
-        (rowSpacing * totalRows); // Total Row
+        titleSpacing +                              // Space above title
+        (LB_FONT_SIZE * 2) +                       // Title height
+        headerSpacing +                            // Space between title and headers
+        LB_FONT_SIZE +                            // Headers height
+        headerSpacing +                            // Space between headers and entries
+        (rowSpacing * totalRows);                 // All rows height
 
     // Calculate starting Y position to center everything
     int startY = (screenHeight - totalHeight) / 2;
 
-
+    // Title
     const char* title = "LEADERBOARD";
     int titleFontSize = LB_FONT_SIZE * 2;
     int titleWidth = MeasureText(title, titleFontSize);
+
     int currentY = startY;
 
     DrawText(title,
@@ -127,42 +128,38 @@ void DrawLeaderboardScreen(const Leaderboard* leaderboard, int screenWidth, int 
     // Update currentY for headers
     currentY += titleSpacing + titleFontSize;
 
+    // Calculate header texts and their widths
     const char* headerRank = "RANK";
     const char* headerScore = "SCORE";
     const char* headerCombo = "MAX COMBO";
-    const char* headerDate = "DATE";
 
     int rankWidth = MeasureText(headerRank, LB_FONT_SIZE);
     int scoreWidth = MeasureText(headerScore, LB_FONT_SIZE);
     int comboWidth = MeasureText(headerCombo, LB_FONT_SIZE);
-    int dateWidth = MeasureText(headerDate, LB_FONT_SIZE);
 
-    // Ccolumn positions from center!
+    // Calculate column positions from center
     const int columnSpacing = LB_PADDING * 10;
     const int centerX = screenWidth/2;
 
-    // Column centers!
-    const int rankX = centerX - columnSpacing * 1.5;
-    const int scoreX = centerX - columnSpacing * 0.5;
-    const int comboX = centerX + columnSpacing * 0.5;
-    const int dateX = centerX + columnSpacing * 1.5;
+    // Define column centers - adjusted for 3 columns
+    const int rankX = centerX - columnSpacing;
+    const int scoreX = centerX;
+    const int comboX = centerX + columnSpacing;
 
-    // Draw Header!
+    // Draw headers
     DrawText(headerRank, rankX - rankWidth/2, currentY, LB_FONT_SIZE, GRAY);
     DrawText(headerScore, scoreX - scoreWidth/2, currentY, LB_FONT_SIZE, GRAY);
     DrawText(headerCombo, comboX - comboWidth/2, currentY, LB_FONT_SIZE, GRAY);
-    DrawText(headerDate, dateX - dateWidth/2, currentY, LB_FONT_SIZE, GRAY);
 
     // Update currentY for entries
     currentY += headerSpacing + LB_FONT_SIZE;
 
-    // Main draw loop!
+    // Main draw loop - always draw 10 rows
     for (int i = 0; i < MAX_LEADERBOARD_ENTRIES; i++)
     {
-        // Here we give a special colour to the first, second and third place!
         Color color = (i == 0) ? GOLD : (i == 1) ? LIGHTGRAY : (i == 2) ? BROWN : WHITE;
 
-        // Rank column!
+        // Rank column
         char rank[4];
         sprintf(rank, "#%d", i + 1);
         int currentRankWidth = MeasureText(rank, LB_FONT_SIZE);
@@ -172,32 +169,32 @@ void DrawLeaderboardScreen(const Leaderboard* leaderboard, int screenWidth, int 
         {
             const LeaderboardEntry* entry = &leaderboard->entries[i];
 
+            // Score
             char score[32];
             sprintf(score, "%d", entry->score);
             int currentScoreWidth = MeasureText(score, LB_FONT_SIZE);
             DrawText(score, scoreX - currentScoreWidth/2, currentY, LB_FONT_SIZE, color);
 
+            // Combo
             char combo[32];
             sprintf(combo, "x%d", entry->maxCombo);
             int currentComboWidth = MeasureText(combo, LB_FONT_SIZE);
             DrawText(combo, comboX - currentComboWidth/2, currentY, LB_FONT_SIZE, color);
-
-            int currentDateWidth = MeasureText(entry->date, LB_FONT_SIZE);
-            DrawText(entry->date, dateX - currentDateWidth/2, currentY, LB_FONT_SIZE, color);
         }
         else
         {
+            // Empty rows
             const char* dots = "...";
             int dotsWidth = MeasureText(dots, LB_FONT_SIZE);
 
             DrawText(dots, scoreX - dotsWidth/2, currentY, LB_FONT_SIZE, DARKGRAY);
             DrawText(dots, comboX - dotsWidth/2, currentY, LB_FONT_SIZE, DARKGRAY);
-            DrawText(dots, dateX - dotsWidth/2, currentY, LB_FONT_SIZE, DARKGRAY);
         }
 
         currentY += rowSpacing;
     }
 
+    // Instructions at bottom
     const char* instructions = "Press Q to return to menu";
     int instrWidth = MeasureText(instructions, LB_FONT_SIZE);
 

@@ -6,7 +6,7 @@
 #include <stdbool.h>
 
 #define BALL_SPEED_MIN 900.0f
-#define BALL_SPEED_MAX 1800.0f
+#define BALL_SPEED_MAX 1700.0f
 #define TRAIL_LENGTH 10
 #define TRAIL_SPACING 3
 

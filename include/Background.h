@@ -41,10 +41,15 @@ typedef struct Background
     DistortedQuad* quadCache;
     bool distortionNeedsUpdate;
     float lastCurvature;
+
+    RenderTexture2D staticEffects;    // Static effects
+    RenderTexture2D uiTexture;
+    bool staticEffectsNeedUpdate;
 } Background;
 
 Background InitBackground(int width, int height);
 void UpdateBackground(Background* background, float deltaTime);
+void UpdateStaticEffects(Background* background, int width, int height);
 void DrawBackground(Background* background, int width, int height, Texture2D sourceTexture);
 void UnloadBackground(Background* background);
 

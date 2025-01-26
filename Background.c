@@ -12,14 +12,55 @@ Background InitBackground(int width, int height)
         .flickerIntensity = 0.3f,
         .vignetteIntensity = 0.3f,
         .scanlineIntensity = 1.0f,
+
         .effectTexture = LoadRenderTexture(width, height),
         .finalTexture = LoadRenderTexture(width, height),
         .quadCache = (DistortedQuad*)MemAlloc(MAX_QUADS * sizeof(DistortedQuad)),
         .distortionNeedsUpdate = true,
-        .lastCurvature = 0.05f // We use this to cache our screen curvature values!
+        .lastCurvature = 0.05f, // We use this to cache our screen curvature values!
+
+        .staticEffects = LoadRenderTexture(width, height),
+        .uiTexture = LoadRenderTexture(width, height),
+        .staticEffectsNeedUpdate = true,
     };
 
+    UpdateStaticEffects(&background, width, height);
     return background;
+}
+
+// Due to our effects tanking FPS, I've refactored some of them to be static! Hence this method.
+void UpdateStaticEffects(Background* background, int width, int height)
+{
+    if (!background->staticEffectsNeedUpdate)
+    {
+        return;
+    }
+
+    BeginTextureMode(background->staticEffects);
+    {
+        ClearBackground(BLANK);
+
+        // Base phosphor!
+        DrawRectangle(0, 0, width, height,
+                     ColorAlpha(background->phosphorColor, 0.15f));
+
+        // Scanline effect!
+        for (int y = 0; y < height; y += 4)
+        {
+            DrawRectangle(0, y, width, 2,
+                         ColorAlpha(background->phosphorColor, 0.3f));
+        }
+
+        // Vignette effect!
+        float vignetteSize = (float)width * 0.8f;
+        DrawCircleGradient(width/2, height/2,
+                          vignetteSize,
+                          (Color){0, 0, 0, 0},
+                          (Color){0, 0, 0, 180 * background->vignetteIntensity});
+    }
+    EndTextureMode();
+
+    background->staticEffectsNeedUpdate = false;
 }
 
 // Our main update method! Here we adjust our Scanline positions!
@@ -67,40 +108,11 @@ Vector2 DistortPoint(Vector2 point, Vector2 center, float curveAmount, int width
     };
 }
 
+// Our main draw method! This is supposed to compose the final image after all effects!
 void DrawBackground(Background* background, int width, int height, Texture2D gameScreen)
 {
-    // First render the CRT effects
-    BeginTextureMode(background->effectTexture);
-    {
-        ClearBackground(BLANK);
-
-        // Increase base phosphor intensity
-        DrawRectangle(0, 0, width, height,
-                     ColorAlpha(background->phosphorColor, 0.15f));  // Increased from 0.05f
-
-        // A Scanning line effect!
-        float scanBrightness = (sinf(background->time * 5) + 1.0f) * 0.5f;
-        Color scanColor = ColorAlpha(background->phosphorColor, 0.4f * scanBrightness);
-        DrawRectangle(0, background->scanlinePos - 2, width, 4, scanColor);
-
-        // Horizontal scanlines
-        for (int y = 0; y < height; y += 4)
-        {
-            float lineIntensity = background->scanlineIntensity *
-                (0.8f + 0.2f * sinf(y * 0.01f + background->time));
-
-            Color lineColor = ColorAlpha(background->phosphorColor,
-                lineIntensity * 0.5f);
-
-            DrawLine(0, y, width, y, lineColor);
-        }
-
-        // Screen flicker!
-        float flicker = 1.0f + sinf(background->time * 40) * background->flickerIntensity;
-        Color flickerColor = ColorAlpha(background->phosphorColor, 0.1f * flicker);
-        DrawRectangle(0, 0, width, height, flickerColor);
-    }
-    EndTextureMode();
+    // Update effects if needed ( we do this in Init too )
+    UpdateStaticEffects(background, width, height);
 
     // We now compose and apply the barrel distortion to the final image
     BeginTextureMode(background->finalTexture);
@@ -157,7 +169,7 @@ void DrawBackground(Background* background, int width, int height, Texture2D gam
             background->distortionNeedsUpdate = false;
         }
 
-        // Draw using cached distortion
+        // Just for clarity, this is the distortion of our game screen!
         int quadIndex = 0;
 
         for(int y = 0; y < verticalQuads; y++)
@@ -186,21 +198,28 @@ void DrawBackground(Background* background, int width, int height, Texture2D gam
             }
         }
 
-        // Here we overlay the CRT effects
-        DrawTexture(background->effectTexture.texture, 0, 0,
-                   (Color){255, 255, 255, 255});
+        // Drawing our static effects!
+        DrawTexture(background->staticEffects.texture, 0, 0, WHITE);
 
-        // Enhanced vignette
-        float vignetteSize = (float)width * 0.8f;
-        DrawCircleGradient(width/2, height/2,
-                          vignetteSize,
-                          (Color){0, 0, 0, 0},
-                          (Color){0, 0, 0, 180 * background->vignetteIntensity});
+        // Drawing our dynamic animated effects!
+        BeginTextureMode(background->effectTexture);
+        {
+            ClearBackground(BLANK);
 
-        // A Phosphor persistence effect, aka ghosting!
-        float persistence = (sinf(background->time * 1.5f) + 1.0f) * 0.5f;
-        Color persistColor = ColorAlpha(background->phosphorColor, 0.08f * persistence);
-        DrawRectangle(0, 0, width, height, persistColor);
+            // Moving scanline effect!
+            float scanBrightness = (sinf(background->time * 5) + 1.0f) * 0.5f;
+            Color scanColor = ColorAlpha(background->phosphorColor, 0.4f * scanBrightness);
+            DrawRectangle(0, (int)background->scanlinePos - 2, width, 3, scanColor);
+
+            // Screen flicker effect!
+            float flicker = 1.0f + sinf(background->time * 40) * background->flickerIntensity;
+            Color flickerColor = ColorAlpha(background->phosphorColor, 0.1f * flicker);
+            DrawRectangle(0, 0, width, height, flickerColor);
+        }
+        EndTextureMode();
+
+        // Then, we must draw to overlay our dynamic effects
+        DrawTexture(background->effectTexture.texture, 0, 0, WHITE);
     }
     EndTextureMode();
 
@@ -213,4 +232,7 @@ void UnloadBackground(Background* background)
 {
     UnloadRenderTexture(background->effectTexture);
     UnloadRenderTexture(background->finalTexture);
+    UnloadRenderTexture(background->staticEffects);
+    UnloadRenderTexture(background->uiTexture);
+    MemFree(background->quadCache);
 }

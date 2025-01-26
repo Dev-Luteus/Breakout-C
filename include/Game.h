@@ -42,6 +42,9 @@ typedef struct Game
     float normalTimeScale;
 
     Leaderboard leaderboard;
+
+    float uiUpdateTimer;
+    const float UI_UPDATE_INTERVAL;
 } Game;
 
 // Core!
@@ -56,5 +59,8 @@ void HandlePowerUpCollisions(Game* game);
 void UpdatePowerUps(Game* game);
 void DrawPowerUps(Game* game);
 void DrawPowerUpTimers(Game game);
+
+// UI!
+void DrawUI(Game* game);
 
 #endif // GAME_H

@@ -34,7 +34,9 @@ Game InitGame(int width, int height)
         .timeScale = 1.0f,
         .normalTimeScale = 1.0f,
 
-        .leaderboard = InitLeaderboard()
+        .leaderboard = InitLeaderboard(),
+        .uiUpdateTimer = 0.0f,
+        .UI_UPDATE_INTERVAL = 1.0f/30.0f, // We want to render UI at 30 fps!
     };
 
     // Player, Ball, Blocks
@@ -162,6 +164,17 @@ void UpdateGame(Game* game)
     game->spawnSystem.cooldownTimer -= deltaTime; // power ups
     UpdateBackground(&game->background, deltaTime);
 
+    /* We've seperated UI onto a different layer from the game.
+     * Many games I play tend to render UI at lower framerates to save on performance
+     * I agreed with this idea, so I'm trying to do this here! */
+    game->uiUpdateTimer += deltaTime;
+
+    if (game->uiUpdateTimer >= game->UI_UPDATE_INTERVAL)
+    {
+        DrawUI(game);
+        game->uiUpdateTimer = 0.0f;
+    }
+
     switch(game->state)
     {
         case MAIN_MENU:
@@ -263,164 +276,117 @@ void UpdateGame(Game* game)
     }
 }
 
+/* Just for clearer seperation of concers, I've moved the UI drawing to a seperate function
+ * I also do this because we now draw the UI on a seperate layer from the rest of the game =) */
+void DrawUI(Game* game)
+{
+    BeginTextureMode(game->background.uiTexture);
+    {
+        if (game->state == PLAYING)
+        {
+            ClearBackground(BLANK);
+
+            char comboText[64];
+
+            if (game->combo > 0)
+            {
+                float multiplier = 1.0f + (game->combo * 0.1f);
+                sprintf(comboText, "Combo: %d (x%.1f)", game->combo, multiplier);
+            }
+            else
+            {
+                sprintf(comboText, "Combo: 0");
+            }
+
+            DrawText(comboText,
+                game->screenWidth/2 - MeasureText(comboText, FONT_SIZE)/2,
+                PADDING_TOP,
+                FONT_SIZE,
+                game->combo > 0 ? GREEN : WHITE);
+
+            // Score popup
+            if (game->lastScoreTimer > 0)
+            {
+                char scorePopup[32];
+                sprintf(scorePopup, "+%d", game->lastScoreGained);
+                float alpha = game->lastScoreTimer;
+                Color popupColor = {0, 255, 0, (unsigned char)(alpha * 255)};
+                DrawText(scorePopup,
+                    game->screenWidth/2 - MeasureText(scorePopup, FONT_SIZE)/2,
+                    PADDING_TOP + FONT_SIZE + 10,
+                    FONT_SIZE,
+                    popupColor);
+            }
+
+            char scoreText[32];
+            sprintf(scoreText, "Score: %d", game->player.score);
+            DrawText(scoreText,
+                PADDING_SIDE,
+                PADDING_TOP,
+                FONT_SIZE,
+                WHITE);
+
+            char livesText[32];
+            sprintf(livesText, "Lives: %d", game->player.lives);
+            int livesTextWidth = MeasureText(livesText, FONT_SIZE);
+            DrawText(livesText,
+                game->screenWidth - livesTextWidth - PADDING_SIDE,
+                PADDING_TOP,
+                FONT_SIZE,
+                WHITE);
+
+            DrawPowerUpTimers(*game);
+        }
+        EndTextureMode();
+    }
+}
+
 void DrawGame(Game game)
 {
-    /* So, here I'm really trying to implement layers. The idea is that we:
-     * First draw all of the game elements onto a texture*/
     BeginTextureMode(game.gameTexture);
     {
         ClearBackground(BLACK);
 
         switch(game.state)
         {
+            case PLAYING:
+                DrawPlayerWithTrail(&game.player);
+                DrawBlocks(game.blocks);
+                DrawBall(game.ball);
+                DrawPowerUps(&game);
+            break;
+
             case MAIN_MENU:
             case TUTORIAL:
             case LEADERBOARD:
                 DrawMainMenu(game);
             break;
 
-            case PLAYING:
-            {
-                // Draw game elements
-                DrawPlayerWithTrail(&game.player);
-                DrawBlocks(game.blocks);
-                DrawBall(game.ball);
-                DrawPowerUps(&game);
-
-                // UI Elements
-                DrawPowerUpTimers(game);
-
-                // Draw combo text
-                char comboText[64];
-                if (game.combo > 0)
-                {
-                    float multiplier = 1.0f + (game.combo * 0.1f);
-                    sprintf(comboText, "Combo: %d (x%.1f)", game.combo, multiplier);
-                }
-                else
-                {
-                    sprintf(comboText, "Combo: 0");
-                }
-
-                DrawText(comboText,
-                    game.screenWidth/2 - MeasureText(comboText, FONT_SIZE)/2,
-                    PADDING_TOP,
-                    FONT_SIZE,
-                    game.combo > 0 ? GREEN : WHITE);
-
-                // Draw score popup
-                if (game.lastScoreTimer > 0)
-                {
-                    char scorePopup[32];
-                    sprintf(scorePopup, "+%d", game.lastScoreGained);
-
-                    float alpha = game.lastScoreTimer;
-                    Color popupColor = {0, 255, 0, (unsigned char)(alpha * 255)};
-
-                    DrawText(scorePopup,
-                        game.screenWidth/2 - MeasureText(scorePopup, FONT_SIZE)/2,
-                        PADDING_TOP + FONT_SIZE + 10,
-                        FONT_SIZE,
-                        popupColor);
-                }
-
-                // Draw score
-                char scoreText[32];
-                sprintf(scoreText, "Score: %d", game.player.score);
-
-                DrawText(scoreText,
-                    PADDING_SIDE,
-                    PADDING_TOP,
-                    FONT_SIZE,
-                    WHITE);
-
-                // Draw lives
-                char livesText[32];
-                sprintf(livesText, "Lives: %d", game.player.lives);
-                int livesTextWidth = MeasureText(livesText, FONT_SIZE);
-
-                DrawText(livesText,
-                    game.screenWidth - livesTextWidth - PADDING_SIDE,
-                    PADDING_TOP,
-                    FONT_SIZE,
-                    WHITE);
-            } break;
-
             case GAME_OVER:
-            {
-                const char* gameOverText = "GAME OVER";
-                const int titleFontSize = 50;
-                const int optionsFontSize = 34;
-                const int optionsSpacing = 50;
-
-                int gameOverWidth = MeasureText(gameOverText, titleFontSize);
-
-                DrawText(gameOverText,
-                    game.screenWidth/2 - gameOverWidth/2,
-                    game.screenHeight/2 - 80,
-                    titleFontSize,
-                    RED);
-
-                const char* restartText = "Press R to Restart";
-                const char* menuText = "Press Q for Menu";
-                int restartWidth = MeasureText(restartText, optionsFontSize);
-                int menuWidth = MeasureText(menuText, optionsFontSize);
-
-                DrawText(restartText,
-                    game.screenWidth/2 - restartWidth/2,
-                    game.screenHeight/2,
-                    optionsFontSize,
-                    WHITE);
-
-                DrawText(menuText,
-                    game.screenWidth/2 - menuWidth/2,
-                    game.screenHeight/2 + optionsSpacing,
-                    optionsFontSize,
-                    YELLOW);
-            } break;
-
             case WIN:
-            {
-                const char* winText = "YOU WIN!";
-                const int titleFontSize = 50;
-                const int optionsFontSize = 34;
-                const int optionsSpacing = 150;
-
-                int winWidth = MeasureText(winText, titleFontSize);
-
-                DrawText(winText,
-                    game.screenWidth/2 - winWidth/2,
-                    game.screenHeight/2 - 80,
-                    titleFontSize,
-                    GREEN);
-
-                const char* restartText = "Press R to Restart";
-                const char* menuText = "Press Q for Menu";
-                int restartWidth = MeasureText(restartText, optionsFontSize);
-                int menuWidth = MeasureText(menuText, optionsFontSize);
-
-                DrawText(restartText,
-                    game.screenWidth/2 - restartWidth/2,
-                    game.screenHeight/2,
-                    optionsFontSize,
-                    WHITE);
-
-                DrawText(menuText,
-                    game.screenWidth/2 - menuWidth/2,
-                    game.screenHeight/2 + optionsSpacing,
-                    optionsFontSize,
-                    YELLOW);
-            } break;
+                // Game over and win states can be drawn here if you want them affected by CRT
+                // Or move them to UI if you want them clean
+                break;
         }
     }
     EndTextureMode();
 
-    // Apply CRT effect and draw final result
     BeginDrawing();
     {
         ClearBackground(BLACK);
+
         DrawBackground(&game.background, game.screenWidth, game.screenHeight,
                       game.gameTexture.texture);
+
+        // UI
+        DrawTexturePro(game.background.uiTexture.texture,
+              (Rectangle){ 0, 0,
+                         game.background.uiTexture.texture.width,
+                         -game.background.uiTexture.texture.height },
+              (Rectangle){ 0, 0,
+                         game.screenWidth,
+                         game.screenHeight },
+              (Vector2){ 0, 0 }, 0, WHITE);
     }
     EndDrawing();
 }

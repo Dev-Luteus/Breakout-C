@@ -156,10 +156,12 @@ void DrawMainMenu(Game game)
 
     // Menu control hints
     const char* controlsText = "Navigate: UP/DOWN/W/S  |  Select: ENTER  |  Back: Q";
+    const int controlsFontSize = 30;
+
     DrawText(controlsText,
-        game.screenWidth/2 - MeasureText(controlsText, 26)/2,
+        game.screenWidth/2 - MeasureText(controlsText, controlsFontSize)/2,
         game.screenHeight - 40,
-        24,
+        controlsFontSize,
         LIGHTGRAY);
 }
 

@@ -9,7 +9,7 @@ Background InitBackground(int width, int height)
         .scanlinePos = 0,
         .phosphorColor = (Color){0, 255, 0, 255},
         .screenCurvature = 0.05f,
-        .flickerIntensity = 0.3f,
+        .flickerIntensity = 0.4f,
         .vignetteIntensity = 0.3f,
         .scanlineIntensity = 1.0f,
 
@@ -42,13 +42,13 @@ void UpdateStaticEffects(Background* background, int width, int height)
 
         // Base phosphor!
         DrawRectangle(0, 0, width, height,
-                     ColorAlpha(background->phosphorColor, 0.15f));
+                     ColorAlpha(background->phosphorColor, 0.3f));
 
         // Scanline effect!
         for (int y = 0; y < height; y += 4)
         {
             DrawRectangle(0, y, width, 2,
-                         ColorAlpha(background->phosphorColor, 0.3f));
+                         ColorAlpha(background->phosphorColor, 0.4f));
         }
 
         // Vignette effect!

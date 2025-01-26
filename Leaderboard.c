@@ -98,16 +98,19 @@ void DrawLeaderboardScreen(const Leaderboard* leaderboard, int screenWidth, int 
     // Calculate total height needed for the leaderboard
     const int rowSpacing = LB_FONT_SIZE + 20;
     const int totalRows = MAX_LEADERBOARD_ENTRIES;
-    const int headerSpacing = LB_PADDING * 2;
-    const int titleSpacing = LB_PADDING * 4;
+    const int headerSpacing = LB_PADDING * 3;
+    const int titleSpacing = LB_PADDING * 5;
+    const int bottomPadding = LB_PADDING * 6;
 
+    // Calculate total content height
     int totalHeight =
-        titleSpacing +                              // Space above title
-        (LB_FONT_SIZE * 2) +                       // Title height
-        headerSpacing +                            // Space between title and headers
-        LB_FONT_SIZE +                            // Headers height
-        headerSpacing +                            // Space between headers and entries
-        (rowSpacing * totalRows);                 // All rows height
+        titleSpacing +
+        (LB_FONT_SIZE * 2) +           // Title height
+        headerSpacing +                // Space between title and headers
+        LB_FONT_SIZE +                 // Headers height
+        headerSpacing +                // Space between headers and entries
+        (rowSpacing * totalRows) +     // All rows height
+        bottomPadding;                 // Space for bottom text
 
     // Calculate starting Y position to center everything
     int startY = (screenHeight - totalHeight) / 2;
@@ -116,8 +119,7 @@ void DrawLeaderboardScreen(const Leaderboard* leaderboard, int screenWidth, int 
     const char* title = "LEADERBOARD";
     int titleFontSize = LB_FONT_SIZE * 2;
     int titleWidth = MeasureText(title, titleFontSize);
-
-    int currentY = startY;
+    int currentY = startY + titleSpacing;
 
     DrawText(title,
         screenWidth/2 - titleWidth/2,
@@ -128,7 +130,6 @@ void DrawLeaderboardScreen(const Leaderboard* leaderboard, int screenWidth, int 
     // Update currentY for headers
     currentY += titleSpacing + titleFontSize;
 
-    // Calculate header texts and their widths
     const char* headerRank = "RANK";
     const char* headerScore = "SCORE";
     const char* headerCombo = "MAX COMBO";
@@ -138,7 +139,7 @@ void DrawLeaderboardScreen(const Leaderboard* leaderboard, int screenWidth, int 
     int comboWidth = MeasureText(headerCombo, LB_FONT_SIZE);
 
     // Calculate column positions from center
-    const int columnSpacing = LB_PADDING * 10;
+    const int columnSpacing = screenWidth * 0.15;
     const int centerX = screenWidth/2;
 
     // Define column centers - adjusted for 3 columns

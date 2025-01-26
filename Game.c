@@ -451,31 +451,18 @@ void TransitionToMenu(Game* game)
 {
     game->state = MAIN_MENU;
     game->selectedOption = MENU_PLAY;
+
+    ResetGame(game);
+
+    // Override the PLAYING state set by ResetGame
+    game->state = MAIN_MENU;
     game->inMenu = true;
 
-    // Reset player stats
-    game->player = InitPlayer(game->screenWidth, game->screenHeight);
-    game->combo = 0;
-    game->maxCombo = 0;
-    game->lastScoreGained = 0;
-    game->lastScoreTimer = 0.0f;
-
-    // Reset game state
-    game->timeScale = game->normalTimeScale;
-    game->powerUpCount = 0;
-    game->spawnSystem = InitPowerUpSpawnSystem();
-
-    // Reset all powerups
-    for (int i = 0; i < 10; i++)
-    {
-        game->powerUps[i].active = false;
-    }
-
-    // Clear the UI texture
     BeginTextureMode(game->background.uiTexture);
     {
         ClearBackground(BLANK);
     }
+
     EndTextureMode();
 }
 

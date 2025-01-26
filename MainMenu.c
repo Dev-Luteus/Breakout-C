@@ -59,6 +59,7 @@ void UpdateMainMenu(Game* game)
         switch (game->selectedOption)
         {
             case MENU_PLAY:
+                ResetGame(game);
                 game->state = PLAYING;
                 game->inMenu = false;
             break;

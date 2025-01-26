@@ -4,17 +4,17 @@
 #include <raylib.h>
 #include <stdbool.h>
 
-#define PU_LIFE_COLOR (Color){0x8B, 0x1B, 0x52, 0xFF}   // #8B1B52
-#define PU_SPEED_COLOR (Color){0xEC, 0xED, 0xAB, 0xFF}  // #ECEDAB
-#define PU_GROWTH_COLOR (Color){0xAC, 0xED, 0xAB, 0xFF} // #ACEDAB
-#define PU_GHOST_COLOR (Color){0x1B, 0x8B, 0x89, 0xFF}    // #1b8b89
-#define PU_TIMEWARP_COLOR (Color){0x7E, 0x1B, 0x8B, 0xFF} // #7e1b8b
-#define PU_DAMAGE_COLOR (Color){0x8B, 0x1B, 0x1B, 0xFF}  // #8b1b1b
+#define PU_DAMAGE_COLOR (Color){0xFF, 0x40, 0x40, 0xFF}    // Bright phosphor red (#FF4040)
+#define PU_LIFE_COLOR (Color){0x80, 0x20, 0x20, 0xFF}      // Dark red with slight green (#802020)
+#define PU_GROWTH_COLOR (Color){0x16, 0xFF, 0x16, 0xFF}    // Pure phosphor green (#16FF16)
+#define PU_SPEED_COLOR (Color){0xFF, 0xFF, 0x40, 0xFF}     // Bright yellow with green tint (#FFFF40)
+#define PU_GHOST_COLOR (Color){0x40, 0xFF, 0xFF, 0xFF}     // Bright cyan (#40FFFF)
+#define PU_TIMEWARP_COLOR (Color){0xFF, 0x40, 0xFF, 0xFF}  // Bright purple with green tint (#FF40FF)
 
 #define PU_SPEED_DURATION 12.0
 #define PU_GROWTH_DURATION 13.0
 #define PU_DEFAULT_DURATION 0.0
-#define PU_GHOST_DURATION 2.0f
+#define PU_GHOST_DURATION 1.5f
 #define PU_TIMEWARP_DURATION 6.0f
 #define PU_DAMAGE_DURATION 12.0f
 

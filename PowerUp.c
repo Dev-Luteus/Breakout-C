@@ -65,7 +65,7 @@ PowerUp CreatePowerUp(Vector2 position, PowerUpType type, float duration)
     {
         .position = position,
         .velocity = MyVector2Create(0, 650),  // Pixel p/s
-        .radius = 24,
+        .radius = 28,
         .active = true,
         .type = type,
         .duration = duration,
@@ -135,20 +135,20 @@ void ApplyPowerUpEffect(PowerUp* powerUp, Player* player, Game* game)
         case POWERUP_LIFE:
             game->player.lives += PU_LIFE_AMOUNT;
             powerUp->duration = PU_DEFAULT_DURATION;
-            powerUp->active = false;  // We do this for an immediate effect!
+            powerUp->active = false;  // No Duration!
         break;
 
         case POWERUP_SPEED:
             player->speed = player->baseSpeed * PU_SPEED_MULTIPLIER;
             powerUp->duration = PU_SPEED_DURATION;
-            powerUp->active = true;  // track duration
+            powerUp->active = true;
             player->speed, powerUp->duration;
         break;
 
         case POWERUP_GROWTH:
             player->width = player->baseWidth * PU_GROWTH_MULTIPLIER;
             powerUp->duration = PU_GROWTH_DURATION;
-            powerUp->active = true;  // track duration
+            powerUp->active = true;
             player->width, powerUp->duration;
         break;
 
@@ -169,8 +169,8 @@ void ApplyPowerUpEffect(PowerUp* powerUp, Player* player, Game* game)
             game->ball.damageMultiplier = PU_DAMAGE_MULTIPLIER;
             powerUp->duration = PU_DAMAGE_DURATION;
             powerUp->active = true;
-            game->ball.currentColor = PLAYER_COLOR;
-            game->ball.radius += 2;
+            game->ball.currentColor = PU_DAMAGE_COLOR;
+            game->ball.radius += 3;
         break;
     }
 }
@@ -214,16 +214,14 @@ void HandlePowerUpCollisions(Game* game)
             if (!alreadyActive)
             {
                 ApplyPowerUpEffect(powerUp, &game->player, game);
-                powerUp->active = true;      // Keep the power-up active for effect
-                powerUp->wasPickedUp = true; // Mark as picked up
+                powerUp->active = true;
+                powerUp->wasPickedUp = true;
                 game->powerUpCount--;
-                printf("Applied power-up of type %d\n", powerUp->type);
             }
-            else
+            else // Skip!
             {
                 powerUp->active = false;
                 game->powerUpCount--;
-                printf("Power-up of type %d already active, skipping\n", powerUp->type);
             }
         }
     }
@@ -271,9 +269,6 @@ void UpdatePowerUps(Game* game)
             double elapsedTime = currentTime - powerUp->startTime;
             powerUp->remainingDuration = powerUp->duration - elapsedTime;
 
-            printf("PowerUp type %d: %.2f seconds remaining\n",
-            powerUp->type, powerUp->remainingDuration);
-
             if (powerUp->remainingDuration <= 0)
             {
                 switch(powerUp->type)
@@ -290,7 +285,7 @@ void UpdatePowerUps(Game* game)
 
                     case POWERUP_GHOST:
                         game->ball.isGhost = false;
-                        game->ball.currentColor = WHITE;
+                        game->ball.currentColor = BALL_COLOR;
                     break;
 
                     case POWERUP_TIMEWARP:
@@ -300,7 +295,7 @@ void UpdatePowerUps(Game* game)
                     case POWERUP_DAMAGE:
                         game->ball.damageMultiplier = 1;
                         game->ball.radius -= 2;
-                        game->ball.currentColor = WHITE;
+                        game->ball.currentColor = BALL_COLOR;
                     break;
                 }
 
@@ -339,9 +334,6 @@ void DrawPowerUp(PowerUp powerUp)
     // Outer circle!
     DrawCircleV(powerUp.position, powerUp.radius, pulsingColor);
 
-    // Inner circle!
-    DrawCircleV(powerUp.position, powerUp.radius * 0.5f, WHITE);
-
     // Here we try to draw an ICON for each type of power up
     const char* text;
 
@@ -376,7 +368,7 @@ void DrawPowerUp(PowerUp powerUp)
         break;
     }
 
-    int fontSize = powerUp.radius;
+    int fontSize = (int)(powerUp.radius * 1.3f);
     int textWidth = MeasureText(text, fontSize);
     int textHeight = fontSize;
 

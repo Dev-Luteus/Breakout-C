@@ -317,7 +317,7 @@ void DrawUI(Game* game)
                 game->screenWidth/2 - MeasureText(comboText, FONT_SIZE)/2,
                 PADDING_TOP,
                 FONT_SIZE,
-                game->combo > 0 ? GREEN : WHITE);
+                game->combo > 0 ? PLAYER_COLOR : BALL_COLOR);
 
             // Score popup
             if (game->lastScoreTimer > 0)
@@ -383,7 +383,7 @@ void DrawGame(Game game)
                 const char* menuText = "Press Q for Menu";
 
                 const char* titleText = (game.state == WIN) ? "YOU WIN!" : "GAME OVER";
-                Color titleColor = (game.state == WIN) ? GREEN : RED;
+                Color titleColor = (game.state == WIN) ? PLAYER_COLOR : PU_DAMAGE_COLOR;
 
                 int titleWidth = MeasureText(titleText, TITLE_FONT_SIZE);
                 int restartWidth = MeasureText(restartText, OPTIONS_FONT_SIZE);
@@ -399,13 +399,13 @@ void DrawGame(Game game)
                     game.screenWidth/2 - restartWidth/2,
                     game.screenHeight/2,
                     OPTIONS_FONT_SIZE,
-                    WHITE);
+                    BALL_COLOR);
 
                 DrawText(menuText,
                     game.screenWidth/2 - menuWidth/2,
                     game.screenHeight/2 + OPTIONS_SPACING,
                     OPTIONS_FONT_SIZE,
-                    YELLOW);
+                    PU_SPEED_COLOR);
                 break;
         }
     }

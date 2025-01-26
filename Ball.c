@@ -14,7 +14,7 @@ Ball InitBall(Vector2 position)
         .active = false,
         .trail = {0}, // initialise to default values
         .damageMultiplier = 1,
-        .currentColor = WHITE
+        .currentColor = BALL_COLOR
     };
 
     // Initialize trail positions to starting position

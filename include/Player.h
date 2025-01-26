@@ -5,7 +5,7 @@
 #include <stdbool.h>
 
 #define PLAYER_SPEED_BOOST 1.5f
-#define PLAYER_COLOR (Color){ 0xE8, 0x67, 0x94, 0xFF }
+#define PLAYER_COLOR (Color){0x40, 0xFF, 0x40, 0xFF}  // Bright phosphor green
 
 #define PLAYER_TRAIL_LENGTH 14
 #define PLAYER_TRAIL_SPACING 3

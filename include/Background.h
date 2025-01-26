@@ -3,7 +3,7 @@
 
 #include <raylib.h>
 
-#define QUAD_SIZE 4
+#define QUAD_SIZE 12
 #define MAX_QUADS ((1920/QUAD_SIZE) * (1080/QUAD_SIZE))
 
 // CRT Quad effect!

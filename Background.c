@@ -11,7 +11,7 @@ Background InitBackground(int width, int height)
         .screenCurvature = 0.04f,
         .flickerIntensity = 0.3f,
         .vignetteIntensity = 0.3f,
-        .scanlineIntensity = 0.8f,
+        .scanlineIntensity = 1.0f,
         .effectTexture = LoadRenderTexture(width, height),
         .finalTexture = LoadRenderTexture(width, height),
         .quadCache = (DistortedQuad*)MemAlloc(MAX_QUADS * sizeof(DistortedQuad)),
@@ -26,7 +26,8 @@ Background InitBackground(int width, int height)
 void UpdateBackground(Background* background, float deltaTime)
 {
     background->time += deltaTime;
-    background->scanlinePos += 200.0f * deltaTime;
+    background->scanlinePos += 100.0f * deltaTime;
+
     if (background->scanlinePos > GetScreenHeight())
     {
         background->scanlinePos = 0;
@@ -77,25 +78,16 @@ void DrawBackground(Background* background, int width, int height, Texture2D gam
         DrawRectangle(0, 0, width, height,
                      ColorAlpha(background->phosphorColor, 0.15f));  // Increased from 0.05f
 
-        // Our loop for drawing a grain like effect using DrawPixel!
-        for (int i = 0; i < width * height / 100; i++)
-        {
-            int x = GetRandomValue(0, width - 1);
-            int y = GetRandomValue(0, height - 1);
-            float noiseIntensity = (float)GetRandomValue(0, 128) / 500.0f;
-            DrawPixel(x, y, ColorAlpha(background->phosphorColor, noiseIntensity));
-        }
-
         // A Scanning line effect!
-        float scanBrightness = (sinf(background->time * 10) + 1.0f) * 0.5f;
+        float scanBrightness = (sinf(background->time * 5) + 1.0f) * 0.5f;
         Color scanColor = ColorAlpha(background->phosphorColor, 0.4f * scanBrightness);
         DrawRectangle(0, background->scanlinePos - 2, width, 4, scanColor);
 
         // Horizontal scanlines
-        for (int y = 0; y < height; y += 2)
+        for (int y = 0; y < height; y += 4)
         {
             float lineIntensity = background->scanlineIntensity *
-                (0.8f + 0.2f * sinf(y * 0.1f + background->time * 2));
+                (0.8f + 0.2f * sinf(y * 0.01f + background->time));
 
             Color lineColor = ColorAlpha(background->phosphorColor,
                 lineIntensity * 0.5f);
@@ -104,8 +96,8 @@ void DrawBackground(Background* background, int width, int height, Texture2D gam
         }
 
         // Screen flicker!
-        float flicker = 1.0f + sinf(background->time * 60) * background->flickerIntensity;
-        Color flickerColor = ColorAlpha(background->phosphorColor, 0.1f * flicker);  // Increased from 0.03f
+        float flicker = 1.0f + sinf(background->time * 40) * background->flickerIntensity;
+        Color flickerColor = ColorAlpha(background->phosphorColor, 0.1f * flicker);
         DrawRectangle(0, 0, width, height, flickerColor);
     }
     EndTextureMode();
@@ -127,15 +119,25 @@ void DrawBackground(Background* background, int width, int height, Texture2D gam
         if (background->distortionNeedsUpdate)
         {
             int quadIndex = 0;
+
             for(int y = 0; y < height; y += QUAD_SIZE)
             {
                 for(int x = 0; x < width; x += QUAD_SIZE)
                 {
+                    // To optimize this code, we try to only calculate distortion for the visible area
+                    float distFromCenter = sqrtf(
+                        powf((x - center.x) / width, 2) +
+                        powf((y - center.y) / height, 2)
+                    );
+
+                    // Here, we use larger quads for the edges of the screen
+                    int currentQuadSize = distFromCenter > 0.7f ? QUAD_SIZE * 2 : QUAD_SIZE;
+
                     Vector2 p1 = DistortPoint((Vector2){x, y}, center,
                                           background->screenCurvature, width, height);
-                    Vector2 p2 = DistortPoint((Vector2){x + QUAD_SIZE, y}, center,
+                    Vector2 p2 = DistortPoint((Vector2){x + currentQuadSize, y}, center,
                                           background->screenCurvature, width, height);
-                    Vector2 p3 = DistortPoint((Vector2){x, y + QUAD_SIZE}, center,
+                    Vector2 p3 = DistortPoint((Vector2){x, y + currentQuadSize}, center,
                                           background->screenCurvature, width, height);
 
                     background->quadCache[quadIndex].position = p1;
@@ -149,6 +151,7 @@ void DrawBackground(Background* background, int width, int height, Texture2D gam
 
         // Draw using cached distortion
         int quadIndex = 0;
+
         for(int y = 0; y < height; y += QUAD_SIZE)
         {
             for(int x = 0; x < width; x += QUAD_SIZE)
@@ -173,17 +176,17 @@ void DrawBackground(Background* background, int width, int height, Texture2D gam
 
         // Here we overlay the CRT effects
         DrawTexture(background->effectTexture.texture, 0, 0,
-                   (Color){255, 255, 255, 200});
+                   (Color){255, 255, 255, 255});
 
         // Enhanced vignette
-        float vignetteSize = (float)width * 0.8f;  // Increased from 0.7f
+        float vignetteSize = (float)width * 0.8f;
         DrawCircleGradient(width/2, height/2,
                           vignetteSize,
                           (Color){0, 0, 0, 0},
                           (Color){0, 0, 0, 180 * background->vignetteIntensity});
 
         // A Phosphor persistence effect, aka ghosting!
-        float persistence = (sinf(background->time * 3) + 1.0f) * 0.5f;
+        float persistence = (sinf(background->time * 1.5f) + 1.0f) * 0.5f;
         Color persistColor = ColorAlpha(background->phosphorColor, 0.08f * persistence);
         DrawRectangle(0, 0, width, height, persistColor);
     }

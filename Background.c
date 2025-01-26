@@ -12,9 +12,13 @@ Background InitBackground(int width, int height)
         .flickerIntensity = 0.03f,
         .vignetteIntensity = 0.5f,
         .scanlineIntensity = 0.1f,
-        .renderTexture = LoadRenderTexture(width, height),
-        .gameTexture = LoadRenderTexture(width, height),
-        .finalTexture = LoadRenderTexture(width, height)
+
+        .effectTexture = LoadRenderTexture(width, height),
+        .finalTexture = LoadRenderTexture(width, height),
+
+        .quadCache = (DistortedQuad*)MemAlloc(MAX_QUADS * sizeof(DistortedQuad)),
+        .distortionNeedsUpdate = true,
+        .lastCurvature = 0.03f // We use this to cache our screen curvature values!
     };
 
     return background;
@@ -24,9 +28,7 @@ Background InitBackground(int width, int height)
 void UpdateBackground(Background* background, float deltaTime)
 {
     background->time += deltaTime;
-
     background->scanlinePos += 200.0f * deltaTime;
-
     if (background->scanlinePos > GetScreenHeight())
     {
         background->scanlinePos = 0;
@@ -37,7 +39,6 @@ void UpdateBackground(Background* background, float deltaTime)
  * I tried using this formula: r' = r * (1 + kr²), but it didn't work as expected.
  * Instead, we use this formula p' = p * (1.0 - k * (p.x² + p.y²)) found here:
  * https://www.geeks3d.com/20140213/glsl-shader-library-fish-eye-and-dome-and-barrel-distortion-post-processing-filters/2/
- *
  */
 Vector2 DistortPoint(Vector2 point, Vector2 center, float curveAmount, int width, int height)
 {
@@ -67,13 +68,12 @@ Vector2 DistortPoint(Vector2 point, Vector2 center, float curveAmount, int width
     };
 }
 
-// Draw CRT background effects to the render texture
-void DrawBackgroundEffects(Background* background, int width, int height)
+void DrawBackground(Background* background, int width, int height, Texture2D gameScreen)
 {
     // This is a RenderTexture method, we want to first render all effects to our the render texture
-    BeginTextureMode(background->renderTexture);
+    BeginTextureMode(background->effectTexture);
     {
-        ClearBackground(BLACK);
+        ClearBackground(BLANK);
 
         // Draw base phosphor layer!
         DrawRectangle(0, 0, width, height,
@@ -85,7 +85,6 @@ void DrawBackgroundEffects(Background* background, int width, int height)
             int x = GetRandomValue(0, width - 1);
             int y = GetRandomValue(0, height - 1);
             float noiseIntensity = (float)GetRandomValue(0, 128) / 500.0f;
-
             DrawPixel(x, y, ColorAlpha(background->phosphorColor, noiseIntensity));
         }
 
@@ -99,7 +98,6 @@ void DrawBackgroundEffects(Background* background, int width, int height)
         {
             float lineIntensity = background->scanlineIntensity *
                 (0.8f + 0.2f * sinf(y * 0.1f + background->time * 2));
-
             Color lineColor = ColorAlpha(background->phosphorColor, lineIntensity);
             DrawLine(0, y, width, y, lineColor);
         }
@@ -110,103 +108,69 @@ void DrawBackgroundEffects(Background* background, int width, int height)
         DrawRectangle(0, 0, width, height, flickerColor);
     }
     EndTextureMode();
-}
 
-// Apply barrel distortion and compose final image
-void ComposeDistortedImage(Background* background, int width, int height)
-{
+    // We now compose and apply the barrel distortion to the final image
     BeginTextureMode(background->finalTexture);
     {
         ClearBackground(BLACK);
-
-        // After our effects, we now draw the distorted texture using math that makes me want to die
         Vector2 center = {width/2.0f, height/2.0f};
 
-        /* Thanks to some guides, we're opting to use texture coordinates (UV coordinates)
-         * These are always in the range 0.0 to 1.0
-         * where (0,0) is top-left and (1,1) is bottom-right of the texture
-         *
-         * So, for a texture of size 100x100:
-         * Position (0,0)    → UV (0.0, 0.0)
-         * Position (50,50)  → UV (0.5, 0.5)
-         * Position (100,100)→ UV (1.0, 1.0)
-         *
-         * Our formula here is: UV = position / texture_size */
-
-        // Here, we're drawing a distorted texture using mesh. It's a grid of 4x4 pixel quads
-        for(int y = 0; y < height; y += 4)
+        // In order to not flood our memory, here I'm trying to only update distortion if needed
+        if (background->screenCurvature != background->lastCurvature)
         {
-            for(int x = 0; x < width; x += 4)
+            background->distortionNeedsUpdate = true;
+            background->lastCurvature = background->screenCurvature;
+        }
+
+        // Pre-calculate distortion if needed
+        if (background->distortionNeedsUpdate)
+        {
+            int quadIndex = 0;
+
+            for(int y = 0; y < height; y += QUAD_SIZE)
             {
-                // First, we calculate the distorted positions for each corner of our 4x4 quad
-                Vector2 p1 = DistortPoint((Vector2){x, y}, center,
-                                        background->screenCurvature, width, height);
-                Vector2 p2 = DistortPoint((Vector2){x + 4, y}, center,
-                                        background->screenCurvature, width, height);
-                Vector2 p3 = DistortPoint((Vector2){x, y + 4}, center,
-                                        background->screenCurvature, width, height);
-                Vector2 p4 = DistortPoint((Vector2){x + 4, y + 4}, center,
-                                        background->screenCurvature, width, height);
+                for(int x = 0; x < width; x += QUAD_SIZE)
+                {
+                    Vector2 p1 = DistortPoint((Vector2){x, y}, center,
+                                          background->screenCurvature, width, height);
+                    Vector2 p2 = DistortPoint((Vector2){x + QUAD_SIZE, y}, center,
+                                          background->screenCurvature, width, height);
+                    Vector2 p3 = DistortPoint((Vector2){x, y + QUAD_SIZE}, center,
+                                          background->screenCurvature, width, height);
 
-                /* UV coordinates must be normalized (0 to 1)
-                 * u = x / texture_width
-                 * v = y / texture_height
-                 * So, for example, if x = 100 and width = 800:
-                 * u = 100/800 = 0.125 (12.5% across the texture) */
+                    background->quadCache[quadIndex].position = p1;
+                    background->quadCache[quadIndex].width = p2.x - p1.x;
+                    background->quadCache[quadIndex].height = p3.y - p1.y;
+                    quadIndex++;
+                }
+            }
+            background->distortionNeedsUpdate = false;
+        }
 
-                // Top-left UV coordinate
-                Vector2 t1 = {
-                    (float)x / width,        // u1 = x position / texture width
-                    (float)y / height        // v1 = y position / texture height
-                };
+        // Draw using cached distortion
+        int quadIndex = 0;
+        for(int y = 0; y < height; y += QUAD_SIZE)
+        {
+            for(int x = 0; x < width; x += QUAD_SIZE)
+            {
+                DistortedQuad* quad = &background->quadCache[quadIndex++];
 
-                // Top-right UV coordinate
-                Vector2 t2 = {
-                    (float)(x + 4) / width,  // u2 = (x + quad_size) / texture width
-                    (float)y / height        // v2 = y position / texture height
-                };
+                // Skip if quad is outside screen
+                if (quad->position.x > width || (quad->position.x + quad->width) < 0 ||
+                    quad->position.y > height || (quad->position.y + quad->height) < 0)
+                    continue;
 
-                // Bottom-left UV coordinate
-                Vector2 t3 = {
-                    (float)x / width,        // u3 = x position / texture width
-                    (float)(y + 4) / height  // v3 = (y + quad_size) / texture height
-                };
-
-                // Bottom-right UV coordinate
-                Vector2 t4 = {
-                    (float)(x + 4) / width,  // u4 = (x + quad_size) / texture width
-                    (float)(y + 4) / height  // v4 = (y + quad_size) / texture height
-                };
-
-                /* Notes:
-                 * Here we're using Raylibs DrawTexturePro function. Parameters:
-                 * source: where to sample from original texture (x, y, width, height)
-                 * dest: where to draw on screen (x, y, width, height)
-                 * origin: rotation origin point (0,0 for no rotation)
-                 * rotation: rotation in degrees (0 for no rotation)
-                 * tint: color to tint the texture (WHITE for no tint) */
-
-                // Draw background layer with distortion
-                DrawTexturePro(background->renderTexture.texture,
-                    (Rectangle){x, y, 4, 4},  // Source rectangle
-                    (Rectangle){p1.x, p1.y,               // Destination position
-                              p2.x - p1.x,                // Distorted width
-                              p3.y - p1.y},         // Distorted height
-                    (Vector2){0, 0},                // Origin (no rotation)
-                    0,                                    // Rotation angle
-                    WHITE);                               // No tint
-
-                // Draw game layer with same distortion
-                DrawTexturePro(background->gameTexture.texture,
-                    (Rectangle){x, y, 4, 4},
-                    (Rectangle){p1.x, p1.y,
-                              p2.x - p1.x,
-                              p3.y - p1.y},
-                    (Vector2){0, 0},
-                    0,
-                    WHITE);
+                // Draw the game screen with distortion
+                DrawTexturePro(gameScreen,
+                    (Rectangle){x, y, QUAD_SIZE, QUAD_SIZE},
+                    (Rectangle){quad->position.x, quad->position.y,
+                              quad->width, quad->height},
+                    (Vector2){0, 0}, 0, WHITE);
             }
         }
+
+        // Overlay the CRT effects
+        DrawTexture(background->effectTexture.texture, 0, 0, WHITE);
 
         // A simple Vignette effect!
         float vignetteSize = (float)width * 0.7f;
@@ -221,29 +185,14 @@ void ComposeDistortedImage(Background* background, int width, int height)
         DrawRectangle(0, 0, width, height, persistColor);
     }
     EndTextureMode();
-}
 
-// Our main draw method!
-void DrawBackground(Background* background, int width, int height)
-{
-    // First draw the CRT effects
-    DrawBackgroundEffects(background, width, height);
-
-    // Then compose the final image with distortion
-    ComposeDistortedImage(background, width, height);
-
-    // Finally, draw the result to the screen
-    BeginDrawing();
-    {
-        DrawTexture(background->finalTexture.texture, 0, 0, WHITE);
-    }
-    EndDrawing();
+    // Draw the final result
+    DrawTexture(background->finalTexture.texture, 0, 0, WHITE);
 }
 
 // Unloading cause otherwise bad (Free memory)
 void UnloadBackground(Background* background)
 {
-    UnloadRenderTexture(background->renderTexture);
-    UnloadRenderTexture(background->gameTexture);
+    UnloadRenderTexture(background->effectTexture);
     UnloadRenderTexture(background->finalTexture);
 }

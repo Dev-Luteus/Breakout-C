@@ -16,6 +16,7 @@ Game InitGame(int width, int height)
         .screenWidth = width,
         .screenHeight = height,
         .background = InitBackground(width, height),
+        .gameTexture = LoadRenderTexture(width, height),
 
         .state = MAIN_MENU,
         .selectedOption = MENU_PLAY, // default
@@ -264,13 +265,11 @@ void UpdateGame(Game* game)
 
 void DrawGame(Game game)
 {
-    // First draw background effects
-    DrawBackgroundEffects(&game.background, game.screenWidth, game.screenHeight);
-
-    // Then draw game elements to game texture
-    BeginTextureMode(game.background.gameTexture);
+    /* So, here I'm really trying to implement layers. The idea is that we:
+     * First draw all of the game elements onto a texture*/
+    BeginTextureMode(game.gameTexture);
     {
-        ClearBackground(BLANK);
+        ClearBackground(BLACK);
 
         switch(game.state)
         {
@@ -416,14 +415,12 @@ void DrawGame(Game game)
     }
     EndTextureMode();
 
-    // Compose final image with distortion effect
-    ComposeDistortedImage(&game.background, game.screenWidth, game.screenHeight);
-
-    // Draw the final composited and distorted image
+    // Apply CRT effect and draw final result
     BeginDrawing();
     {
         ClearBackground(BLACK);
-        DrawTexture(game.background.finalTexture.texture, 0, 0, WHITE);
+        DrawBackground(&game.background, game.screenWidth, game.screenHeight,
+                      game.gameTexture.texture);
     }
     EndDrawing();
 }

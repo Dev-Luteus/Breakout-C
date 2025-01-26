@@ -14,6 +14,8 @@ typedef struct Game
 {
     int screenWidth;
     int screenHeight;
+
+    RenderTexture2D gameTexture; // before background!
     Background background;
 
     GameState state;

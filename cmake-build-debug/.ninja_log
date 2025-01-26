@@ -43,3 +43,10 @@
 100	225	7596095532435425	RaylibGame.exe	fccc020906dc75a1
 3	78	7596102281949637	CMakeFiles/RaylibGame.dir/Background.c.obj	cff6ca2fa053e518
 78	214	7596102282703915	RaylibGame.exe	fccc020906dc75a1
+3	97	7596111500450319	CMakeFiles/RaylibGame.dir/Game.c.obj	fbbb0bb06aebacc9
+98	241	7596111501396978	RaylibGame.exe	fccc020906dc75a1
+2	68	7596117029141739	CMakeFiles/RaylibGame.dir/main.c.obj	97fed9ada13ca7f
+13	82	7596117029253087	CMakeFiles/RaylibGame.dir/MainMenu.c.obj	24c31a6a6ea4e529
+10	96	7596117029223075	CMakeFiles/RaylibGame.dir/PowerUp.c.obj	a77fa37f3b823c0e
+6	97	7596117029192133	CMakeFiles/RaylibGame.dir/Game.c.obj	fbbb0bb06aebacc9
+97	227	7596117030095476	RaylibGame.exe	fccc020906dc75a1

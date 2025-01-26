@@ -62,5 +62,6 @@ void DrawPowerUpTimers(Game game);
 
 // UI!
 void DrawUI(Game* game);
+void TransitionToMenu(Game* game);
 
 #endif // GAME_H

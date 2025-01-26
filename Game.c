@@ -10,6 +10,11 @@
 #define PADDING_SIDE 60
 #define FONT_SIZE 28
 
+#define TITLE_FONT_SIZE 50
+#define OPTIONS_FONT_SIZE 34
+#define OPTIONS_SPACING 150
+#define TITLE_Y_OFFSET 80
+
 Game InitGame(int width, int height)
 {
     Game game = {
@@ -167,12 +172,24 @@ void UpdateGame(Game* game)
     /* We've seperated UI onto a different layer from the game.
      * Many games I play tend to render UI at lower framerates to save on performance
      * I agreed with this idea, so I'm trying to do this here! */
-    game->uiUpdateTimer += deltaTime;
 
-    if (game->uiUpdateTimer >= game->UI_UPDATE_INTERVAL)
+    if (game->state == PLAYING)
     {
-        DrawUI(game);
-        game->uiUpdateTimer = 0.0f;
+        game->uiUpdateTimer += deltaTime;
+
+        if (game->uiUpdateTimer >= game->UI_UPDATE_INTERVAL)
+        {
+            DrawUI(game);
+            game->uiUpdateTimer = 0.0f;
+        }
+    }
+    else
+    {
+        BeginTextureMode(game->background.uiTexture);
+        {
+            ClearBackground(BLANK);
+        }
+        EndTextureMode();
     }
 
     switch(game->state)
@@ -268,9 +285,7 @@ void UpdateGame(Game* game)
             }
             else if (IsKeyPressed(KEY_Q))
             {
-                game->state = MAIN_MENU;
-                game->selectedOption = MENU_PLAY;
-                game->inMenu = true;
+                TransitionToMenu(game);
             }
         break;
     }
@@ -354,18 +369,43 @@ void DrawGame(Game game)
                 DrawBlocks(game.blocks);
                 DrawBall(game.ball);
                 DrawPowerUps(&game);
-            break;
+                break;
 
             case MAIN_MENU:
             case TUTORIAL:
             case LEADERBOARD:
                 DrawMainMenu(game);
-            break;
+                break;
 
             case GAME_OVER:
             case WIN:
-                // Game over and win states can be drawn here if you want them affected by CRT
-                // Or move them to UI if you want them clean
+                const char* restartText = "Press R to Restart";
+                const char* menuText = "Press Q for Menu";
+
+                const char* titleText = (game.state == WIN) ? "YOU WIN!" : "GAME OVER";
+                Color titleColor = (game.state == WIN) ? GREEN : RED;
+
+                int titleWidth = MeasureText(titleText, TITLE_FONT_SIZE);
+                int restartWidth = MeasureText(restartText, OPTIONS_FONT_SIZE);
+                int menuWidth = MeasureText(menuText, OPTIONS_FONT_SIZE);
+
+                DrawText(titleText,
+                    game.screenWidth/2 - titleWidth/2,
+                    game.screenHeight/2 - TITLE_Y_OFFSET,
+                    TITLE_FONT_SIZE,
+                    titleColor);
+
+                DrawText(restartText,
+                    game.screenWidth/2 - restartWidth/2,
+                    game.screenHeight/2,
+                    OPTIONS_FONT_SIZE,
+                    WHITE);
+
+                DrawText(menuText,
+                    game.screenWidth/2 - menuWidth/2,
+                    game.screenHeight/2 + OPTIONS_SPACING,
+                    OPTIONS_FONT_SIZE,
+                    YELLOW);
                 break;
         }
     }
@@ -389,6 +429,38 @@ void DrawGame(Game game)
               (Vector2){ 0, 0 }, 0, WHITE);
     }
     EndDrawing();
+}
+
+void TransitionToMenu(Game* game)
+{
+    game->state = MAIN_MENU;
+    game->selectedOption = MENU_PLAY;
+    game->inMenu = true;
+
+    // Reset player stats
+    game->player = InitPlayer(game->screenWidth, game->screenHeight);
+    game->combo = 0;
+    game->maxCombo = 0;
+    game->lastScoreGained = 0;
+    game->lastScoreTimer = 0.0f;
+
+    // Reset game state
+    game->timeScale = game->normalTimeScale;
+    game->powerUpCount = 0;
+    game->spawnSystem = InitPowerUpSpawnSystem();
+
+    // Reset all powerups
+    for (int i = 0; i < 10; i++)
+    {
+        game->powerUps[i].active = false;
+    }
+
+    // Clear the UI texture
+    BeginTextureMode(game->background.uiTexture);
+    {
+        ClearBackground(BLANK);
+    }
+    EndTextureMode();
 }
 
 // Reinitialise everything on reset 'R' !

@@ -3,8 +3,18 @@
 
 #include <raylib.h>
 
-#define QUAD_SIZE 12
-#define MAX_QUADS ((1920/QUAD_SIZE) * (1080/QUAD_SIZE))
+/* Math formula notes to remember:
+ * With QUAD_SIZE = 32:
+ * Horizontal quads = ceil(1920/32) = ceil(60) = 60
+ * Vertical quads = ceil(1080/32) = ceil(33.75) = 34
+ * MAX_QUADS = 60 * 34 = 2,040 quads
+
+ * Memory required = 2,040 * sizeof(DistortedQuad)
+                = 2,040 * 16 bytes
+                = 32,640 bytes (only ~32KB!) */
+
+#define QUAD_SIZE 32
+#define MAX_QUADS (((1920 + QUAD_SIZE - 1)/QUAD_SIZE) * ((1080 + QUAD_SIZE - 1)/QUAD_SIZE))
 
 // CRT Quad effect!
 typedef struct {

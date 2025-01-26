@@ -8,7 +8,7 @@ Background InitBackground(int width, int height)
         .time = 0,
         .scanlinePos = 0,
         .phosphorColor = (Color){0, 255, 0, 255},
-        .screenCurvature = 0.04f,
+        .screenCurvature = 0.05f,
         .flickerIntensity = 0.3f,
         .vignetteIntensity = 0.3f,
         .scanlineIntensity = 1.0f,
@@ -16,7 +16,7 @@ Background InitBackground(int width, int height)
         .finalTexture = LoadRenderTexture(width, height),
         .quadCache = (DistortedQuad*)MemAlloc(MAX_QUADS * sizeof(DistortedQuad)),
         .distortionNeedsUpdate = true,
-        .lastCurvature = 0.04f // We use this to cache our screen curvature values!
+        .lastCurvature = 0.05f // We use this to cache our screen curvature values!
     };
 
     return background;
@@ -115,29 +115,37 @@ void DrawBackground(Background* background, int width, int height, Texture2D gam
             background->lastCurvature = background->screenCurvature;
         }
 
+        // These are our grid dimensions!
+        int horizontalQuads = (width + QUAD_SIZE - 1) / QUAD_SIZE;
+        int verticalQuads = (height + QUAD_SIZE - 1) / QUAD_SIZE;
+
         // Here we draw our distorted game screen
         if (background->distortionNeedsUpdate)
         {
             int quadIndex = 0;
 
-            for(int y = 0; y < height; y += QUAD_SIZE)
+            for(int y = 0; y < verticalQuads; y++)
             {
-                for(int x = 0; x < width; x += QUAD_SIZE)
+                float screenY = y * QUAD_SIZE; // Y Pos
+
+                for(int x = 0; x < horizontalQuads; x++)
                 {
+                    float screenX = x * QUAD_SIZE; // X Pos
+
                     // To optimize this code, we try to only calculate distortion for the visible area
                     float distFromCenter = sqrtf(
-                        powf((x - center.x) / width, 2) +
-                        powf((y - center.y) / height, 2)
+                        powf((screenX - center.x) / width, 2) +
+                        powf((screenY - center.y) / height, 2)
                     );
 
                     // Here, we use larger quads for the edges of the screen
                     int currentQuadSize = distFromCenter > 0.7f ? QUAD_SIZE * 2 : QUAD_SIZE;
 
-                    Vector2 p1 = DistortPoint((Vector2){x, y}, center,
+                    Vector2 p1 = DistortPoint((Vector2){screenX, screenY}, center,
+                                      background->screenCurvature, width, height);
+                    Vector2 p2 = DistortPoint((Vector2){screenX + QUAD_SIZE, screenY}, center,
                                           background->screenCurvature, width, height);
-                    Vector2 p2 = DistortPoint((Vector2){x + currentQuadSize, y}, center,
-                                          background->screenCurvature, width, height);
-                    Vector2 p3 = DistortPoint((Vector2){x, y + currentQuadSize}, center,
+                    Vector2 p3 = DistortPoint((Vector2){screenX, screenY + QUAD_SIZE}, center,
                                           background->screenCurvature, width, height);
 
                     background->quadCache[quadIndex].position = p1;
@@ -152,25 +160,29 @@ void DrawBackground(Background* background, int width, int height, Texture2D gam
         // Draw using cached distortion
         int quadIndex = 0;
 
-        for(int y = 0; y < height; y += QUAD_SIZE)
+        for(int y = 0; y < verticalQuads; y++)
         {
-            for(int x = 0; x < width; x += QUAD_SIZE)
+            float screenY = y * QUAD_SIZE;
+
+            for(int x = 0; x < horizontalQuads; x++)
             {
+                float screenX = x * QUAD_SIZE;
+
                 DistortedQuad* quad = &background->quadCache[quadIndex++];
 
                 // Skip if quad is outside screen
-                if (quad->position.x > width || (quad->position.x + quad->width) < 0 ||
-                    quad->position.y > height || (quad->position.y + quad->height) < 0)
+                if (quad->position.x + quad->width < 0 || quad->position.x > width ||
+                quad->position.y + quad->height < 0 || quad->position.y > height)
                 {
                     continue;
                 }
 
                 // Draw the game screen with distortion
                 DrawTexturePro(gameScreen,
-                    (Rectangle){x, y, QUAD_SIZE, QUAD_SIZE},
-                    (Rectangle){quad->position.x, quad->position.y,
-                              quad->width, quad->height},
-                    (Vector2){0, 0}, 0, WHITE);
+                (Rectangle){screenX, screenY, QUAD_SIZE, QUAD_SIZE},
+                (Rectangle){quad->position.x, quad->position.y,
+                          quad->width, quad->height},
+                (Vector2){0, 0}, 0, WHITE);
             }
         }
 

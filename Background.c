@@ -7,18 +7,16 @@ Background InitBackground(int width, int height)
     {
         .time = 0,
         .scanlinePos = 0,
-        .phosphorColor = (Color){0, 255, 0, 128},
-        .screenCurvature = 0.03f,
-        .flickerIntensity = 0.03f,
-        .vignetteIntensity = 0.5f,
-        .scanlineIntensity = 0.1f,
-
+        .phosphorColor = (Color){0, 255, 0, 255},
+        .screenCurvature = 0.04f,
+        .flickerIntensity = 0.3f,
+        .vignetteIntensity = 0.3f,
+        .scanlineIntensity = 0.8f,
         .effectTexture = LoadRenderTexture(width, height),
         .finalTexture = LoadRenderTexture(width, height),
-
         .quadCache = (DistortedQuad*)MemAlloc(MAX_QUADS * sizeof(DistortedQuad)),
         .distortionNeedsUpdate = true,
-        .lastCurvature = 0.03f // We use this to cache our screen curvature values!
+        .lastCurvature = 0.04f // We use this to cache our screen curvature values!
     };
 
     return background;
@@ -70,14 +68,14 @@ Vector2 DistortPoint(Vector2 point, Vector2 center, float curveAmount, int width
 
 void DrawBackground(Background* background, int width, int height, Texture2D gameScreen)
 {
-    // This is a RenderTexture method, we want to first render all effects to our the render texture
+    // First render the CRT effects
     BeginTextureMode(background->effectTexture);
     {
         ClearBackground(BLANK);
 
-        // Draw base phosphor layer!
+        // Increase base phosphor intensity
         DrawRectangle(0, 0, width, height,
-                     ColorAlpha(background->phosphorColor, 0.05f));
+                     ColorAlpha(background->phosphorColor, 0.15f));  // Increased from 0.05f
 
         // Our loop for drawing a grain like effect using DrawPixel!
         for (int i = 0; i < width * height / 100; i++)
@@ -90,7 +88,7 @@ void DrawBackground(Background* background, int width, int height, Texture2D gam
 
         // A Scanning line effect!
         float scanBrightness = (sinf(background->time * 10) + 1.0f) * 0.5f;
-        Color scanColor = ColorAlpha(background->phosphorColor, 0.2f * scanBrightness);
+        Color scanColor = ColorAlpha(background->phosphorColor, 0.4f * scanBrightness);
         DrawRectangle(0, background->scanlinePos - 2, width, 4, scanColor);
 
         // Horizontal scanlines
@@ -98,13 +96,16 @@ void DrawBackground(Background* background, int width, int height, Texture2D gam
         {
             float lineIntensity = background->scanlineIntensity *
                 (0.8f + 0.2f * sinf(y * 0.1f + background->time * 2));
-            Color lineColor = ColorAlpha(background->phosphorColor, lineIntensity);
+
+            Color lineColor = ColorAlpha(background->phosphorColor,
+                lineIntensity * 0.5f);
+
             DrawLine(0, y, width, y, lineColor);
         }
 
-        // Screen flicker
+        // Screen flicker!
         float flicker = 1.0f + sinf(background->time * 60) * background->flickerIntensity;
-        Color flickerColor = ColorAlpha(background->phosphorColor, 0.03f * flicker);
+        Color flickerColor = ColorAlpha(background->phosphorColor, 0.1f * flicker);  // Increased from 0.03f
         DrawRectangle(0, 0, width, height, flickerColor);
     }
     EndTextureMode();
@@ -122,11 +123,10 @@ void DrawBackground(Background* background, int width, int height, Texture2D gam
             background->lastCurvature = background->screenCurvature;
         }
 
-        // Pre-calculate distortion if needed
+        // Here we draw our distorted game screen
         if (background->distortionNeedsUpdate)
         {
             int quadIndex = 0;
-
             for(int y = 0; y < height; y += QUAD_SIZE)
             {
                 for(int x = 0; x < width; x += QUAD_SIZE)
@@ -158,7 +158,9 @@ void DrawBackground(Background* background, int width, int height, Texture2D gam
                 // Skip if quad is outside screen
                 if (quad->position.x > width || (quad->position.x + quad->width) < 0 ||
                     quad->position.y > height || (quad->position.y + quad->height) < 0)
+                {
                     continue;
+                }
 
                 // Draw the game screen with distortion
                 DrawTexturePro(gameScreen,
@@ -169,19 +171,20 @@ void DrawBackground(Background* background, int width, int height, Texture2D gam
             }
         }
 
-        // Overlay the CRT effects
-        DrawTexture(background->effectTexture.texture, 0, 0, WHITE);
+        // Here we overlay the CRT effects
+        DrawTexture(background->effectTexture.texture, 0, 0,
+                   (Color){255, 255, 255, 200});
 
-        // A simple Vignette effect!
-        float vignetteSize = (float)width * 0.7f;
+        // Enhanced vignette
+        float vignetteSize = (float)width * 0.8f;  // Increased from 0.7f
         DrawCircleGradient(width/2, height/2,
                           vignetteSize,
                           (Color){0, 0, 0, 0},
-                          (Color){0, 0, 0, 128 * background->vignetteIntensity});
+                          (Color){0, 0, 0, 180 * background->vignetteIntensity});
 
         // A Phosphor persistence effect, aka ghosting!
         float persistence = (sinf(background->time * 3) + 1.0f) * 0.5f;
-        Color persistColor = ColorAlpha(background->phosphorColor, 0.02f * persistence);
+        Color persistColor = ColorAlpha(background->phosphorColor, 0.08f * persistence);
         DrawRectangle(0, 0, width, height, persistColor);
     }
     EndTextureMode();

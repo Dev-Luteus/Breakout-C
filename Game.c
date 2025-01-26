@@ -110,7 +110,7 @@ void HandleCollisions (Game* game)
                 game->maxCombo = fmax(game->combo, game->maxCombo);
 
                 int baseScore = 100;
-                float comboMultiplier = 1.0f + (game->combo * 0.1f); // 10% per combo
+                float comboMultiplier = 1.0f + (game->combo * 0.5f); // % per combo
                 int finalScore = baseScore * comboMultiplier;
 
                 game->player.score += finalScore;
@@ -143,6 +143,22 @@ void HandleCollisions (Game* game)
 
                                 case POWERUP_GROWTH:
                                     duration = PU_GROWTH_DURATION;
+                                break;
+
+                                case POWERUP_GHOST:
+                                    duration = PU_GHOST_DURATION;
+                                break;
+
+                                case POWERUP_TIMEWARP:
+                                    duration = PU_TIMEWARP_DURATION;
+                                break;
+
+                                case POWERUP_DAMAGE:
+                                    duration = PU_DAMAGE_DURATION;
+                                break;
+
+                                case POWERUP_LIFE:
+                                    duration = PU_DEFAULT_DURATION;
                                 break;
 
                                 default:

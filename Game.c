@@ -15,6 +15,7 @@ Game InitGame(int width, int height)
     Game game = {
         .screenWidth = width,
         .screenHeight = height,
+        .background = InitBackground(width, height),
 
         .state = MAIN_MENU,
         .selectedOption = MENU_PLAY, // default
@@ -158,6 +159,7 @@ void UpdateGame(Game* game)
 {
     float deltaTime = GetFrameTime() * game->timeScale;
     game->spawnSystem.cooldownTimer -= deltaTime; // power ups
+    UpdateBackground(&game->background, deltaTime);
 
     switch(game->state)
     {
@@ -264,7 +266,7 @@ void DrawGame(Game game)
 {
     BeginDrawing();
     {
-        ClearBackground(BLACK);
+        DrawBackground(game.background, game.screenWidth, game.screenHeight);
 
         switch(game.state)
         {

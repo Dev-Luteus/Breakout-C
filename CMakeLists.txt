@@ -22,6 +22,8 @@ add_executable(
         MainMenu.c
         include/Leaderboard.h
         Leaderboard.c
+        include/Background.h
+        Background.c
 )
 
 # Link Raylib library (and required Windows libraries)

@@ -1,6 +1,7 @@
 ﻿#ifndef GAME_H
 #define GAME_H
 
+#include "Background.h"
 #include "Player.h"
 #include "Ball.h"
 #include "Block.h"
@@ -13,6 +14,7 @@ typedef struct Game
 {
     int screenWidth;
     int screenHeight;
+    Background background;
 
     GameState state;
     MenuOption selectedOption;

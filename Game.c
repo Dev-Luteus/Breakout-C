@@ -264,9 +264,13 @@ void UpdateGame(Game* game)
 
 void DrawGame(Game game)
 {
-    BeginDrawing();
+    // First draw background effects
+    DrawBackgroundEffects(&game.background, game.screenWidth, game.screenHeight);
+
+    // Then draw game elements to game texture
+    BeginTextureMode(game.background.gameTexture);
     {
-        DrawBackground(game.background, game.screenWidth, game.screenHeight);
+        ClearBackground(BLANK);
 
         switch(game.state)
         {
@@ -409,6 +413,17 @@ void DrawGame(Game game)
                     YELLOW);
             } break;
         }
+    }
+    EndTextureMode();
+
+    // Compose final image with distortion effect
+    ComposeDistortedImage(&game.background, game.screenWidth, game.screenHeight);
+
+    // Draw the final composited and distorted image
+    BeginDrawing();
+    {
+        ClearBackground(BLACK);
+        DrawTexture(game.background.finalTexture.texture, 0, 0, WHITE);
     }
     EndDrawing();
 }

@@ -114,6 +114,23 @@ void DrawBackground(Background* background, int width, int height, Texture2D gam
     // Update effects if needed ( we do this in Init too )
     UpdateStaticEffects(background, width, height);
 
+    // Drawing our dynamic animated effects!
+    BeginTextureMode(background->effectTexture);
+    {
+        ClearBackground(BLANK);
+
+        // Moving scanline effect!
+        float scanBrightness = (sinf(background->time * 5) + 1.0f) * 0.5f;
+        Color scanColor = ColorAlpha(background->phosphorColor, 0.4f * scanBrightness);
+        DrawRectangle(0, (int)background->scanlinePos - 2, width, 3, scanColor);
+
+        // Screen flicker effect!
+        float flicker = 1.0f + sinf(background->time * 40) * background->flickerIntensity;
+        Color flickerColor = ColorAlpha(background->phosphorColor, 0.1f * flicker);
+        DrawRectangle(0, 0, width, height, flickerColor);
+    }
+    EndTextureMode();
+
     // We now compose and apply the barrel distortion to the final image
     BeginTextureMode(background->finalTexture);
     {
@@ -200,23 +217,6 @@ void DrawBackground(Background* background, int width, int height, Texture2D gam
 
         // Drawing our static effects!
         DrawTexture(background->staticEffects.texture, 0, 0, WHITE);
-
-        // Drawing our dynamic animated effects!
-        BeginTextureMode(background->effectTexture);
-        {
-            ClearBackground(BLANK);
-
-            // Moving scanline effect!
-            float scanBrightness = (sinf(background->time * 5) + 1.0f) * 0.5f;
-            Color scanColor = ColorAlpha(background->phosphorColor, 0.4f * scanBrightness);
-            DrawRectangle(0, (int)background->scanlinePos - 2, width, 3, scanColor);
-
-            // Screen flicker effect!
-            float flicker = 1.0f + sinf(background->time * 40) * background->flickerIntensity;
-            Color flickerColor = ColorAlpha(background->phosphorColor, 0.1f * flicker);
-            DrawRectangle(0, 0, width, height, flickerColor);
-        }
-        EndTextureMode();
 
         // Then, we must draw to overlay our dynamic effects
         DrawTexture(background->effectTexture.texture, 0, 0, WHITE);

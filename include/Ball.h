@@ -5,6 +5,7 @@
 #include <raylib.h>
 #include <stdbool.h>
 
+#define BALL_RADIUS 13.0f
 #define BALL_COLOR (Color){0xB1, 0xFF, 0xB1, 0xFF}
 #define BALL_SPEED_MIN 900.0f
 #define BALL_SPEED_MAX 1700.0f

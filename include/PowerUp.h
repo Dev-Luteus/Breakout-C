@@ -4,6 +4,8 @@
 #include <raylib.h>
 #include <stdbool.h>
 
+typedef struct Game Game; // We do this to avoid a circular dependency, when referring to Game.h!
+
 #define PU_DAMAGE_COLOR (Color){0xFF, 0x40, 0x40, 0xFF}    // Bright phosphor red (#FF4040)
 #define PU_LIFE_COLOR (Color){0x80, 0x20, 0x20, 0xFF}      // Dark red with slight green (#802020)
 #define PU_GROWTH_COLOR (Color){0x16, 0xFF, 0x16, 0xFF}    // Pure phosphor green (#16FF16)
@@ -75,5 +77,6 @@ bool CheckPowerUpCollision(const PowerUp* powerUp, Rectangle playerRect);
 PowerUpSpawnSystem InitPowerUpSpawnSystem(void);
 float CalculateSpawnChance(PowerUpSpawnSystem* system, int combo, int score);
 bool CheckPowerUpSpawn(PowerUpSpawnSystem* system, int combo, int score, float deltaTime);
+void ResetAllPowerUpEffects(Game* game);
 
 #endif // POWERUP_H

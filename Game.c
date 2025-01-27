@@ -115,15 +115,12 @@ void HandleCollisions (Game* game)
                 game->combo++;
                 game->maxCombo = fmax(game->combo, game->maxCombo);
 
-                int baseScore = 100;
-                float comboMultiplier = 1.0f + (game->combo * 0.5f); // % per combo
-                int finalScore = baseScore * comboMultiplier;
+                float comboMultiplier = 1.0f + (game->combo * COMBO_MULTIPLIER);
+                int finalScore = BASE_SCORE * comboMultiplier;
 
                 game->player.score += finalScore;
-
-                // Store the last score gained for display + popUp time
                 game->lastScoreGained = finalScore;
-                game->lastScoreTimer = 1.0f;
+                game->lastScoreTimer = SCORE_POPUP_DURATION;
 
                 if (CheckPowerUpSpawn(&game->spawnSystem, game->combo, game->player.score, GetFrameTime()))
                 {
@@ -458,9 +455,7 @@ void DrawGame(Game game)
                 char finalScoreText[64];
                 sprintf(finalScoreText, "Final Score: %d", game.player.score + baseBonus + scoreBonus);
 
-                int baseY = game.screenHeight/2 - 250;
-                int normalSpacing = 60;
-                int titleSpacing = 160;
+                int baseY = game.screenHeight/2 - BASE_Y_OFFSET;
 
                 DrawText(levelText,
                     game.screenWidth/2 - MeasureText(levelText, TITLE_FONT_SIZE)/2,
@@ -470,43 +465,43 @@ void DrawGame(Game game)
 
                 DrawText(scoreText,
                     game.screenWidth/2 - MeasureText(scoreText, OPTIONS_FONT_SIZE)/2,
-                    baseY + titleSpacing,
+                    baseY + TITLE_SPACING,
                     OPTIONS_FONT_SIZE,
                     WHITE);
 
                 DrawText(comboText,
                     game.screenWidth/2 - MeasureText(comboText, OPTIONS_FONT_SIZE)/2,
-                    baseY + titleSpacing + normalSpacing,
+                    baseY + TITLE_SPACING + NORMAL_SPACING,
                     OPTIONS_FONT_SIZE,
                     PLAYER_COLOR);
 
                 DrawText(baseBonusText,
                     game.screenWidth/2 - MeasureText(baseBonusText, OPTIONS_FONT_SIZE)/2,
-                    baseY + titleSpacing + normalSpacing * 2,
+                    baseY + TITLE_SPACING + NORMAL_SPACING * 2,
                     OPTIONS_FONT_SIZE,
                     GREEN);
 
                 DrawText(scoreBonusText,
                     game.screenWidth/2 - MeasureText(scoreBonusText, OPTIONS_FONT_SIZE)/2,
-                    baseY + titleSpacing + normalSpacing * 3,
+                    baseY + TITLE_SPACING + NORMAL_SPACING * 3,
                     OPTIONS_FONT_SIZE,
                     GREEN);
 
                 DrawText(totalBonusText,
                     game.screenWidth/2 - MeasureText(totalBonusText, OPTIONS_FONT_SIZE)/2,
-                    baseY + titleSpacing + normalSpacing * 4,
+                    baseY + TITLE_SPACING + NORMAL_SPACING * 4,
                     OPTIONS_FONT_SIZE,
                     GREEN);
 
                 DrawText(finalScoreText,
                     game.screenWidth/2 - MeasureText(finalScoreText, OPTIONS_FONT_SIZE)/2,
-                    baseY + titleSpacing + normalSpacing * 5,
+                    baseY + TITLE_SPACING + NORMAL_SPACING * 5,
                     OPTIONS_FONT_SIZE,
                     WHITE);
 
                 DrawText(nextText,
                     game.screenWidth/2 - MeasureText(nextText, OPTIONS_FONT_SIZE)/2,
-                    baseY + titleSpacing + normalSpacing * 7,
+                    baseY + TITLE_SPACING + NORMAL_SPACING * 7,
                     OPTIONS_FONT_SIZE,
                     BALL_COLOR);
             }
@@ -517,6 +512,7 @@ void DrawGame(Game game)
             {
                 const char* restartText = "Press R to Restart";
                 const char* menuText = "Press Q for Menu";
+
                 const char* titleText = (game.state == WIN) ? "YOU WIN!" : "GAME OVER";
                 Color titleColor = (game.state == WIN) ? PLAYER_COLOR : PU_DAMAGE_COLOR;
 
@@ -531,9 +527,7 @@ void DrawGame(Game game)
                 int restartWidth = MeasureText(restartText, OPTIONS_FONT_SIZE);
                 int menuWidth = MeasureText(menuText, OPTIONS_FONT_SIZE);
 
-                int baseY = game.screenHeight/2 - 200;
-                int normalSpacing = 60;
-                int titleSpacing = 160;
+                int baseY = game.screenHeight/2 - BASE_Y_OFFSET;
 
                 DrawText(titleText,
                     game.screenWidth/2 - titleWidth/2,
@@ -543,25 +537,25 @@ void DrawGame(Game game)
 
                 DrawText(finalScoreText,
                     game.screenWidth/2 - scoreWidth/2,
-                    baseY + titleSpacing,
+                    baseY + TITLE_SPACING,
                     OPTIONS_FONT_SIZE,
                     WHITE);
 
                 DrawText(maxComboText,
                     game.screenWidth/2 - comboWidth/2,
-                    baseY + titleSpacing + normalSpacing,
+                    baseY + TITLE_SPACING + NORMAL_SPACING,
                     OPTIONS_FONT_SIZE,
                     PLAYER_COLOR);
 
                 DrawText(restartText,
                     game.screenWidth/2 - restartWidth/2,
-                    baseY + titleSpacing + normalSpacing * 2,
+                    baseY + TITLE_SPACING + NORMAL_SPACING * 2,
                     OPTIONS_FONT_SIZE,
                     BALL_COLOR);
 
                 DrawText(menuText,
                     game.screenWidth/2 - menuWidth/2,
-                    baseY + titleSpacing + normalSpacing * 3,
+                    baseY + TITLE_SPACING + NORMAL_SPACING * 3,
                     OPTIONS_FONT_SIZE,
                     PU_SPEED_COLOR);
             }
@@ -615,19 +609,39 @@ void TransitionToMenu(Game* game)
 
 void LoadNextLevel(Game* game)
 {
-    int levelBonus = CalculateLevelBonus(game->currentLevel, game->player.score);
-    game->player.score += levelBonus;
+    // Score and Powerups
+    int currentScore = game->player.score;
+    int levelBonus = CalculateLevelBonus(game->currentLevel, currentScore);
+
     game->lastScoreGained = levelBonus;
-    game->lastScoreTimer = 2.0f;
+    game->lastScoreTimer = SCORE_POPUP_DURATION;
 
     game->currentLevel++;
+    game->player.score = currentScore + levelBonus;
 
+    ResetAllPowerUpEffects(game);
+
+    game->powerUpCount = 0;
+    for (int i = 0; i < PU_MAX_COUNT; i++)
+    {
+        game->powerUps[i].active = false;
+        game->powerUps[i].wasPickedUp = false;
+    }
+
+    // Ball, Player
     game->ball = InitBall((Vector2)
     {
         game->player.position.x + game->player.width / 2,
         game->player.position.y - 20
     });
 
+    game->ball.active = false;
+    game->ball.speed += 50.0f;
+
+    game->player.width = fmax(40, game->player.width - 10);
+    game->combo = 0;
+
+    // Blocks
     game->currentBlockRows = Clamp(MIN_BLOCK_ROWS + (game->currentLevel - 1),
                                  MIN_BLOCK_ROWS,
                                  MAX_BLOCK_ROWS);
@@ -636,26 +650,16 @@ void LoadNextLevel(Game* game)
                                     MIN_BLOCK_COLUMNS,
                                     MAX_BLOCK_COLUMNS);
 
-    game->ball.active = false;
-    game->ball.speed += 50.0f;
-    game->player.width = fmax(40, game->player.width - 10); // min 40
-    game->combo = 0;
-    game->powerUpCount = 0;
-
-    for (int i = 0; i < 10; i++)
-    {
-        game->powerUps[i].active = false;
-    }
-
     InitBlocks(game->blocks, game->screenWidth, game->screenHeight,
                game->currentBlockRows, game->currentBlockColumns);
+
     game->state = PLAYING;
 }
 
 int CalculateLevelBonus(int level, int currentScore)
 {
-    int baseBonus = 1000 * level;
-    int scoreBonus = currentScore * 0.25f;
+    int baseBonus = LEVEL_BONUS_MULTIPLIER * level;
+    int scoreBonus = currentScore * SCORE_BONUS_MULTIPLIER;
 
     return baseBonus + scoreBonus;
 }

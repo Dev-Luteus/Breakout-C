@@ -10,12 +10,24 @@
 #include "Core.h"
 #include "Leaderboard.h"
 
+// UI
 #define PADDING_TOP 40
 #define PADDING_SIDE 60
 #define FONT_SIZE 28
-
 #define TITLE_FONT_SIZE 72
 #define OPTIONS_FONT_SIZE 36
+
+// Layout
+#define TITLE_SPACING 160
+#define NORMAL_SPACING 60
+#define BASE_Y_OFFSET 250
+
+// Score
+#define BASE_SCORE 100
+#define COMBO_MULTIPLIER 0.5f
+#define SCORE_POPUP_DURATION 1.0f
+#define LEVEL_BONUS_MULTIPLIER 1000
+#define SCORE_BONUS_MULTIPLIER 0.25f
 
 typedef struct Game
 {

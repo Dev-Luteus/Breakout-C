@@ -10,10 +10,10 @@ PowerUpSpawnSystem InitPowerUpSpawnSystem(void)
 {
     return (PowerUpSpawnSystem)
     {
-        .baseChance = 0.05f,
+        .baseChance = 0.05f, // 0.05% base chance
         .comboMultiplier = 0.05f,      // % per combo
         .scoreMultiplier = 0.10f,      // % per 1000
-        .maxChance = 0.30f,            // % cap
+        .maxChance = 0.30f,            // 30% cap
         .cooldownTimer = 0.0f,
         .cooldownDuration = 3.0f,      // Second cooldown
         .currentChance = 0.0f
@@ -64,7 +64,7 @@ PowerUp CreatePowerUp(Vector2 position, PowerUpType type, float duration)
     PowerUp powerUp =
     {
         .position = position,
-        .velocity = MyVector2Create(0, 650),  // Pixel p/s
+        .velocity = MyVector2Create(0, 800),  // Pixel p/s
         .radius = 28,
         .active = true,
         .type = type,
@@ -444,4 +444,15 @@ void DrawPowerUpTimers(Game game)
             activeTimers++;
         }
     }
+}
+
+void ResetAllPowerUpEffects(Game* game)
+{
+    game->player.speed = game->player.baseSpeed;
+    game->player.width = game->player.baseWidth;
+    game->ball.isGhost = false;
+    game->ball.currentColor = BALL_COLOR;
+    game->timeScale = game->normalTimeScale;
+    game->ball.damageMultiplier = 1;
+    game->ball.radius = BALL_RADIUS;
 }

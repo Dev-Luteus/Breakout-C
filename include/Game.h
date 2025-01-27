@@ -33,7 +33,9 @@ typedef struct Game
 
     Player player;
     Ball ball;
-    Block blocks[MAX_BLOCK_ROWS][BLOCK_COLUMNS];
+    Block blocks[MAX_BLOCK_ROWS][MAX_BLOCK_COLUMNS];
+    int currentBlockRows;
+    int currentBlockColumns;
 
     int combo;
     int maxCombo;
@@ -55,7 +57,6 @@ typedef struct Game
 
     int currentLevel;
     const int maxLevels;
-    int currentBlockRows;
 } Game;
 
 // Core!

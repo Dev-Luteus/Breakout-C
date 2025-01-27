@@ -5,27 +5,28 @@
 #include "Ball.h"
 #include "VectorMath.h"
 
-void CalculateBlockDimensions(int screenWidth, int screenHeight, float *blockWidth, float *blockHeight)
+void CalculateBlockDimensions(int screenWidth, int screenHeight, float *blockWidth, float *blockHeight, int columnCount)
 {
     float playableWidth = screenWidth * (1.0f - 2 * BLOCK_SIDE_OFFSET);
-    float totalWidth = playableWidth - (BLOCK_COLUMNS - 1) * BLOCK_SPACING;
+    float totalWidth = playableWidth - (columnCount - 1) * BLOCK_SPACING;  // Need to pass columnCount parameter
 
-    *blockWidth = totalWidth / BLOCK_COLUMNS;
+    *blockWidth = totalWidth / columnCount;
     *blockHeight = screenHeight * 0.03f;
 }
 
-void InitBlocks(Block blocks[MAX_BLOCK_ROWS][BLOCK_COLUMNS], int screenWidth, int screenHeight, int rowCount)
+void InitBlocks(Block blocks[MAX_BLOCK_ROWS][MAX_BLOCK_COLUMNS],
+                int screenWidth, int screenHeight, int rowCount, int columnCount)
 {
     float blockWidth, blockHeight;
-    CalculateBlockDimensions(screenWidth, screenHeight, &blockWidth, &blockHeight);
+    CalculateBlockDimensions(screenWidth, screenHeight, &blockWidth, &blockHeight, columnCount);
 
     float startX = screenWidth * BLOCK_SIDE_OFFSET;
     float startY = screenHeight * BLOCK_TOP_OFFSET;
 
-    // First we initialize all blocks to inactive
+    // Initialize all blocks to inactive first
     for (int row = 0; row < MAX_BLOCK_ROWS; row++)
     {
-        for (int col = 0; col < BLOCK_COLUMNS; col++)
+        for (int col = 0; col < MAX_BLOCK_COLUMNS; col++)
         {
             blocks[row][col].position = (Vector2){0, 0};
             blocks[row][col].width = 0;
@@ -36,13 +37,18 @@ void InitBlocks(Block blocks[MAX_BLOCK_ROWS][BLOCK_COLUMNS], int screenWidth, in
         }
     }
 
-    // Clamp rowCount to valid range
     rowCount = Clamp(rowCount, MIN_BLOCK_ROWS, MAX_BLOCK_ROWS);
+    columnCount = Clamp(columnCount, MIN_BLOCK_COLUMNS, MAX_BLOCK_COLUMNS);
 
-    // Then initialize only the active rows
+    // Here, we have to calculate a new spacing in order for us to maintain centered blocks
+    float totalWidth = screenWidth * (1.0f - 2 * BLOCK_SIDE_OFFSET);
+    float blockAndSpacing = (totalWidth - BLOCK_SPACING) / columnCount;
+    blockWidth = blockAndSpacing - BLOCK_SPACING;
+
+    // Initialize active blocks
     for (int row = 0; row < rowCount; row++)
     {
-        for (int col = 0; col < BLOCK_COLUMNS; col++)
+        for (int col = 0; col < columnCount; col++)
         {
             float x = startX + col * (blockWidth + BLOCK_SPACING);
             float y = startY + row * (blockHeight + BLOCK_SPACING);
@@ -57,13 +63,14 @@ void InitBlocks(Block blocks[MAX_BLOCK_ROWS][BLOCK_COLUMNS], int screenWidth, in
     }
 }
 
-void DrawBlocks(Block blocks[BLOCK_ROWS][BLOCK_COLUMNS], int rowCount)
+void DrawBlocks(Block blocks[MAX_BLOCK_ROWS][MAX_BLOCK_COLUMNS], int rowCount, int columnCount)
 {
     rowCount = Clamp(rowCount, MIN_BLOCK_ROWS, MAX_BLOCK_ROWS);
+    columnCount = Clamp(columnCount, MIN_BLOCK_COLUMNS, MAX_BLOCK_COLUMNS);
 
     for (int row = 0; row < rowCount; ++row)
     {
-        for (int col = 0; col < BLOCK_COLUMNS; ++col)
+        for (int col = 0; col < columnCount; ++col)
         {
             Block block = blocks[row][col];
 
@@ -200,13 +207,14 @@ bool CheckBlockCollision(Block* block, Ball* ball)
     return false;
 }
 
-bool AreAllBlocksDestroyed(Block blocks[MAX_BLOCK_ROWS][BLOCK_COLUMNS], int rowCount)
+bool AreAllBlocksDestroyed(Block blocks[MAX_BLOCK_ROWS][MAX_BLOCK_COLUMNS], int rowCount, int columnCount)
 {
     rowCount = Clamp(rowCount, MIN_BLOCK_ROWS, MAX_BLOCK_ROWS);
+    columnCount = Clamp(columnCount, MIN_BLOCK_COLUMNS, MAX_BLOCK_COLUMNS);
 
     for (int row = 0; row < rowCount; row++)
     {
-        for (int col = 0; col < BLOCK_COLUMNS; col++)
+        for (int col = 0; col < columnCount; col++)
         {
             if (blocks[row][col].active)
             {

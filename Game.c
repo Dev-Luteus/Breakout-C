@@ -40,6 +40,7 @@ Game InitGame(int width, int height)
         .currentLevel = 1,
         .maxLevels = 5,
         .currentBlockRows = MIN_BLOCK_ROWS,
+        .currentBlockColumns = MIN_BLOCK_COLUMNS,
         .player.score = 0,
     };
 
@@ -47,7 +48,7 @@ Game InitGame(int width, int height)
     game.background = InitBackground(width, height);
 
     // Initialise blocks before player/etc
-    InitBlocks(game.blocks, width, height, game.currentBlockRows);
+    InitBlocks(game.blocks, width, height, game.currentBlockRows, game.currentBlockColumns);
 
     // Player, Ball, Blocks
     game.player = InitPlayer(width, height);
@@ -59,7 +60,7 @@ Game InitGame(int width, int height)
 
     game.ball = InitBall(initialBallPos);
 
-    InitBlocks(game.blocks, width, height, game.currentBlockRows);
+    InitBlocks(game.blocks, width, height, game.currentBlockRows, game.currentBlockColumns);
 
     // Initialize all powerups to inactive
     for (int i = 0; i < 10; i++)
@@ -107,7 +108,7 @@ void HandleCollisions (Game* game)
     // Give score to the player on ball/block collision and combo!
     for (int row = 0; row < game->currentBlockRows; row++)
     {
-        for (int col = 0; col < BLOCK_COLUMNS; col++)
+        for (int col = 0; col < game->currentBlockColumns; col++)
         {
             if (CheckBlockCollision(&game->blocks[row][col], &game->ball))
             {
@@ -277,7 +278,7 @@ void UpdateGame(Game* game)
                 }
 
                 // Check win condition
-                if (AreAllBlocksDestroyed(game->blocks, game->currentBlockRows))
+                if (AreAllBlocksDestroyed(game->blocks, game->currentBlockRows, game->currentBlockColumns))
                 {
                     if (game->currentLevel == game->maxLevels)
                     {
@@ -414,10 +415,10 @@ void DrawGame(Game game)
         {
             case PLAYING:
                 DrawPlayerWithTrail(&game.player);
-                DrawBlocks(game.blocks, game.currentBlockRows);
+                DrawBlocks(game.blocks, game.currentBlockRows, game.currentBlockColumns);
                 DrawBall(game.ball);
                 DrawPowerUps(&game);
-                break;
+            break;
 
             case MAIN_MENU:
             case TUTORIAL:
@@ -428,36 +429,84 @@ void DrawGame(Game game)
             case LEVEL_COMPLETE:
             {
                 const char* completeText = "LEVEL COMPLETE!";
-                const char* nextText = "Press SPACE for next level";
+                const char* nextText = "Press SPACE to continue";
 
                 char levelText[32];
                 sprintf(levelText, "Level %d Complete!", game.currentLevel);
 
-                int titleWidth = MeasureText(levelText, TITLE_FONT_SIZE);
-                int completeWidth = MeasureText(completeText, OPTIONS_FONT_SIZE);
-                int nextWidth = MeasureText(nextText, OPTIONS_FONT_SIZE);
+                // Base score
+                char scoreText[64];
+                sprintf(scoreText, "Score: %d", game.player.score - game.lastScoreGained);
 
-                int baseY = game.screenHeight/2 - 200;
+                char comboText[64];
+                sprintf(comboText, "Combo: x%d", game.maxCombo);
+
+                int baseBonus = 1000 * game.currentLevel;
+                int scoreBonus = (game.player.score - game.lastScoreGained) * 0.25f;
+
+                char baseBonusText[64];
+                sprintf(baseBonusText, "Level Bonus: %d (1000 × Level %d)",
+                        baseBonus, game.currentLevel);
+
+                char scoreBonusText[64];
+                sprintf(scoreBonusText, "Score Bonus: %d (25%% of current score)",
+                        scoreBonus);
+
+                char totalBonusText[64];
+                sprintf(totalBonusText, "Total Bonus: %d", baseBonus + scoreBonus);
+
+                char finalScoreText[64];
+                sprintf(finalScoreText, "Final Score: %d", game.player.score + baseBonus + scoreBonus);
+
+                int baseY = game.screenHeight/2 - 250;
                 int normalSpacing = 60;
                 int titleSpacing = 160;
 
                 DrawText(levelText,
-                    game.screenWidth/2 - titleWidth/2,
+                    game.screenWidth/2 - MeasureText(levelText, TITLE_FONT_SIZE)/2,
                     baseY,
                     TITLE_FONT_SIZE,
                     PLAYER_COLOR);
 
-                char scoreText[64];
-                sprintf(scoreText, "Score: %d", game.player.score);
                 DrawText(scoreText,
                     game.screenWidth/2 - MeasureText(scoreText, OPTIONS_FONT_SIZE)/2,
                     baseY + titleSpacing,
                     OPTIONS_FONT_SIZE,
                     WHITE);
 
-                DrawText(nextText,
-                    game.screenWidth/2 - nextWidth/2,
+                DrawText(comboText,
+                    game.screenWidth/2 - MeasureText(comboText, OPTIONS_FONT_SIZE)/2,
                     baseY + titleSpacing + normalSpacing,
+                    OPTIONS_FONT_SIZE,
+                    PLAYER_COLOR);
+
+                DrawText(baseBonusText,
+                    game.screenWidth/2 - MeasureText(baseBonusText, OPTIONS_FONT_SIZE)/2,
+                    baseY + titleSpacing + normalSpacing * 2,
+                    OPTIONS_FONT_SIZE,
+                    GREEN);
+
+                DrawText(scoreBonusText,
+                    game.screenWidth/2 - MeasureText(scoreBonusText, OPTIONS_FONT_SIZE)/2,
+                    baseY + titleSpacing + normalSpacing * 3,
+                    OPTIONS_FONT_SIZE,
+                    GREEN);
+
+                DrawText(totalBonusText,
+                    game.screenWidth/2 - MeasureText(totalBonusText, OPTIONS_FONT_SIZE)/2,
+                    baseY + titleSpacing + normalSpacing * 4,
+                    OPTIONS_FONT_SIZE,
+                    GREEN);
+
+                DrawText(finalScoreText,
+                    game.screenWidth/2 - MeasureText(finalScoreText, OPTIONS_FONT_SIZE)/2,
+                    baseY + titleSpacing + normalSpacing * 5,
+                    OPTIONS_FONT_SIZE,
+                    WHITE);
+
+                DrawText(nextText,
+                    game.screenWidth/2 - MeasureText(nextText, OPTIONS_FONT_SIZE)/2,
+                    baseY + titleSpacing + normalSpacing * 7,
                     OPTIONS_FONT_SIZE,
                     BALL_COLOR);
             }
@@ -580,13 +629,17 @@ void LoadNextLevel(Game* game)
     });
 
     game->currentBlockRows = Clamp(MIN_BLOCK_ROWS + (game->currentLevel - 1),
-                                MIN_BLOCK_ROWS,
-                                MAX_BLOCK_ROWS);
+                                 MIN_BLOCK_ROWS,
+                                 MAX_BLOCK_ROWS);
+
+    game->currentBlockColumns = Clamp(MIN_BLOCK_COLUMNS + (game->currentLevel - 1),
+                                    MIN_BLOCK_COLUMNS,
+                                    MAX_BLOCK_COLUMNS);
 
     game->ball.active = false;
     game->ball.speed += 50.0f;
     game->player.width = fmax(40, game->player.width - 10); // min 40
-
+    game->combo = 0;
     game->powerUpCount = 0;
 
     for (int i = 0; i < 10; i++)
@@ -594,7 +647,8 @@ void LoadNextLevel(Game* game)
         game->powerUps[i].active = false;
     }
 
-    InitBlocks(game->blocks, game->screenWidth, game->screenHeight, game->currentBlockRows);
+    InitBlocks(game->blocks, game->screenWidth, game->screenHeight,
+               game->currentBlockRows, game->currentBlockColumns);
     game->state = PLAYING;
 }
 
@@ -628,10 +682,13 @@ void ResetGame(Game* game)
     game->maxCombo = 0;
     game->currentLevel = 1;
     game->currentBlockRows = MIN_BLOCK_ROWS;
+    game->currentBlockColumns = MIN_BLOCK_COLUMNS;
     game->ball.speed = BALL_SPEED_MIN;
     game->player.width = game->player.baseWidth;
     game->player.score = 0;
 
-    InitBlocks(game->blocks, game->screenWidth, game->screenHeight, game->currentBlockRows);
+    InitBlocks(game->blocks, game->screenWidth, game->screenHeight,
+               game->currentBlockRows, game->currentBlockColumns);
+
     game->state = PLAYING;
 }

@@ -10,7 +10,7 @@ PowerUpSpawnSystem InitPowerUpSpawnSystem(void)
 {
     return (PowerUpSpawnSystem)
     {
-        .baseChance = 0.05f, // 0.05% base chance
+        .baseChance = 0.05f,           // 0.05% base chance
         .comboMultiplier = 0.05f,      // % per combo
         .scoreMultiplier = 0.10f,      // % per 1000
         .maxChance = 0.30f,            // 30% cap
@@ -124,7 +124,7 @@ void UpdatePowerUp(PowerUp* powerUp, float deltaTime)
     powerUp->pulseTimer += deltaTime * 5.0f;
 }
 
-// Here we apply our powerup effect to our player
+// Here we apply our powerup effect to our player!
 void ApplyPowerUpEffect(PowerUp* powerUp, Player* player, Game* game)
 {
     powerUp->wasPickedUp = true;
@@ -135,26 +135,23 @@ void ApplyPowerUpEffect(PowerUp* powerUp, Player* player, Game* game)
         case POWERUP_LIFE:
             game->player.lives += PU_LIFE_AMOUNT;
             powerUp->duration = PU_DEFAULT_DURATION;
-            powerUp->active = false;  // No Duration!
+            powerUp->active = false;
         break;
 
         case POWERUP_SPEED:
             player->speed = player->baseSpeed * PU_SPEED_MULTIPLIER;
             powerUp->duration = PU_SPEED_DURATION;
             powerUp->active = true;
-            player->speed, powerUp->duration;
         break;
 
         case POWERUP_GROWTH:
             player->width = player->baseWidth * PU_GROWTH_MULTIPLIER;
             powerUp->duration = PU_GROWTH_DURATION;
             powerUp->active = true;
-            player->width, powerUp->duration;
         break;
 
         case POWERUP_GHOST:
             game->ball.isGhost = true;
-            game->ball.currentColor = PU_GHOST_COLOR;
             powerUp->duration = PU_GHOST_DURATION;
             powerUp->active = true;
         break;
@@ -169,10 +166,63 @@ void ApplyPowerUpEffect(PowerUp* powerUp, Player* player, Game* game)
             game->ball.damageMultiplier = PU_DAMAGE_MULTIPLIER;
             powerUp->duration = PU_DAMAGE_DURATION;
             powerUp->active = true;
-            game->ball.currentColor = PU_DAMAGE_COLOR;
             game->ball.radius += 3;
         break;
     }
+}
+
+/* Here, we're creating a method to get the active powerup color. We do this because:
+ * I used to have a bug where the ball would reset the colour while another power up was active,
+ * if two colour-changing power ups were active at the same time. Now we can give them a priority instead! */
+Color GetActivePowerUpColor(const PowerUp powerUps[], int count)
+{
+    // Priority order: Ghost > Timewarp > Damage > Default
+    bool hasGhost = false;
+    bool hasTimeWarp = false;
+    bool hasDamage = false;
+
+    for (int i = 0; i < count; i++)
+    {
+        const PowerUp* powerUp = &powerUps[i];
+
+        if (powerUp->active && powerUp->wasPickedUp)
+        {
+            switch (powerUp->type)
+            {
+                case POWERUP_GHOST:
+                    hasGhost = true;
+                break;
+
+                case POWERUP_TIMEWARP:
+                    hasTimeWarp = true;
+                break;
+
+                case POWERUP_DAMAGE:
+                    hasDamage = true;
+                break;
+
+                default:
+                    break;
+            }
+        }
+    }
+
+    if (hasGhost)
+    {
+        return PU_GHOST_COLOR;
+    }
+
+    if (hasTimeWarp)
+    {
+        return PU_TIMEWARP_COLOR;
+    }
+
+    if (hasDamage)
+    {
+        return PU_DAMAGE_COLOR;
+    }
+
+    return BALL_COLOR;
 }
 
 // Here we check Player/PowerUp collision, and apply effects/handle powerups!
@@ -292,7 +342,6 @@ void UpdatePowerUps(Game* game)
 
                     case POWERUP_GHOST:
                         game->ball.isGhost = false;
-                        game->ball.currentColor = BALL_COLOR;
                     break;
 
                     case POWERUP_TIMEWARP:
@@ -302,7 +351,6 @@ void UpdatePowerUps(Game* game)
                     case POWERUP_DAMAGE:
                         game->ball.damageMultiplier = 1;
                         game->ball.radius -= 2;
-                        game->ball.currentColor = BALL_COLOR;
                     break;
                 }
 
@@ -312,6 +360,7 @@ void UpdatePowerUps(Game* game)
             }
         }
     }
+    game->ball.currentColor = GetActivePowerUpColor(game->powerUps, PU_MAX_COUNT);
 }
 
 // Draw all active powerups in Game C!

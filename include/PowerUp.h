@@ -24,7 +24,7 @@ typedef struct Game Game; // We do this to avoid a circular dependency, when ref
 #define PU_LIFE_AMOUNT 2
 #define PU_SPEED_MULTIPLIER 1.25f
 #define PU_GROWTH_MULTIPLIER 1.45f
-#define PU_TIMEWARP_MULTIPLIER 0.7f
+#define PU_TIMEWARP_MULTIPLIER 0.75f
 #define PU_DAMAGE_MULTIPLIER 3
 
 typedef enum
@@ -78,5 +78,8 @@ PowerUpSpawnSystem InitPowerUpSpawnSystem(void);
 float CalculateSpawnChance(PowerUpSpawnSystem* system, int combo, int score);
 bool CheckPowerUpSpawn(PowerUpSpawnSystem* system, int combo, int score, float deltaTime);
 void ResetAllPowerUpEffects(Game* game);
+
+// Effects
+Color GetActivePowerUpColor(const PowerUp powerUps[], int count);
 
 #endif // POWERUP_H

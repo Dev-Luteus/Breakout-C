@@ -101,17 +101,18 @@ bool CheckBlockCollision(Block* block, Ball* ball)
         return false;
     }
 
+    // To prevent the ball from going through gaps it shouldn't, we expand the blocsk radius
+    Rectangle expandedBlock = {
+        block->position.x - ball->radius,
+        block->position.y - ball->radius,
+        block->width + (ball->radius * 2),
+        block->height + (ball->radius * 2)
+    };
+
     // Damage but don't collide!
     if (ball->isGhost)
     {
-        Rectangle blockRect = {
-            block->position.x - ball->radius,
-            block->position.y - ball->radius,
-            block->width + (ball->radius * 2),
-            block->height + (ball->radius * 2)
-        };
-
-        if (CheckCollisionCircleRec(ball->position, ball->radius, blockRect))
+        if (CheckCollisionCircleRec(ball->position, ball->radius, expandedBlock))
         {
             block->lives--;
 
@@ -125,14 +126,6 @@ bool CheckBlockCollision(Block* block, Ball* ball)
         return false;
     }
 
-    // To prevent the ball from going through gaps it shouldn't, we expand the blocsk radius
-    Rectangle expandedBlock = {
-        block->position.x - ball->radius,
-        block->position.y - ball->radius,
-        block->width + (ball->radius * 2),
-        block->height + (ball->radius * 2)
-    };
-
     /* Here we find the closest point on our block, relevant to the balls center
      * This closest points, then determines where the ball collides with the block.
      */
@@ -145,6 +138,8 @@ bool CheckBlockCollision(Block* block, Ball* ball)
     /* Here, we then calculate the distance between the closest point, and our ball's center
      * We do this to get the squared distance between the two points, which we then use to:
      * Compare the squared distance to the squared radius of the ball, to determine if a collision occurred
+     *
+     * distanceSquared = (closestX−ball.centerX)^2 + (closestY−ball.centerY)^2 (pythagoras)
      */
     Vector2 closestPoint = MyVector2Create(closestX, closestY);
     Vector2 ballToClosest = MyVector2Subtract(closestPoint, ball->position);
@@ -166,40 +161,60 @@ bool CheckBlockCollision(Block* block, Ball* ball)
         }
 
         // Here we calculate a blocks center, to help determine which angle to reflect the ball
-        Vector2 blockCenter = MyVector2Create(
+        Vector2 blockCenter = MyVector2Create
+        (
             block->position.x + block->width/2,
             block->position.y + block->height/2
         );
 
-        // Here we normalize the distance relative to the block, and determine which side was hit
-        Vector2 ballToBlock = MyVector2Subtract(ball->position, blockCenter);
-        float dx = fabs(ballToBlock.x) / (block->width/2);
-        float dy = fabs(ballToBlock.y) / (block->height/2);
+        /* Here we normalize the distance relative to the block, and determine which side was hit
+         * normalizedX / Y in this instance becomes a range beetween: −1, 1
+         */
+        Vector2 collisionPoint = MyVector2Subtract(ball->position, blockCenter);
+        float normalizedX = collisionPoint.x / (block->width/2 + ball->radius);
+        float normalizedY = collisionPoint.y / (block->height/2 + ball->radius);
 
-        if (dx > dy)
+        /* Fabs = Absolute value
+         * Here, we determine which collision face is hit, and also attempt to handle corner cases
+         * Fabs > 0.8f means that the ball is close to the corner! */
+        if (fabs(normalizedX) > 0.8f && fabs(normalizedY) > 0.8f)
         {
             ball->direction.x *= -1;
-        }
-        else
-        {
             ball->direction.y *= -1;
         }
+        else if (fabs(normalizedX) > fabs(normalizedY)) // Side collision
+        {
+            ball->direction.x *= -1;
 
-        // Add randomization to prevent repetitive patterns
-        Vector2 randomOffset = MyVector2Create
-        (
-            (float)(GetRandomValue(-5, 5)) / 100.0f,
-            0
-        );
-        ball->direction = MyVector2Add(ball->direction, randomOffset);
+            // Here, we adjust the vertical position to prevent horizontal locking! (horizontal bounce)
+            float verticalAdjust = (GetRandomValue(-10, 10) / 100.0f);
+            ball->direction.y += verticalAdjust;
+        }
+        else // Top Bottom
+        {
+            ball->direction.y *= -1;
+
+            float horizontalAdjust = (GetRandomValue(-10, 10) / 100.0f);
+            ball->direction.x += horizontalAdjust;
+        }
+
+        // Prevent near-horizontal or near-vertical trajectories
+        const float MIN_COMPONENT = 0.2f;
+
+        if (fabs(ball->direction.x) < MIN_COMPONENT)
+        {
+            ball->direction.x = (ball->direction.x >= 0) ? MIN_COMPONENT : -MIN_COMPONENT;
+            ball->direction = MyVector2Normalize(ball->direction);
+        }
+        if (fabs(ball->direction.y) < MIN_COMPONENT)
+        {
+            ball->direction.y = (ball->direction.y >= 0) ? MIN_COMPONENT : -MIN_COMPONENT;
+            ball->direction = MyVector2Normalize(ball->direction);
+        }
+
+        // We must normalize the direction!
         ball->direction = MyVector2Normalize(ball->direction);
-
-        ball->speed = Clamp
-        (
-            ball->speed * 1.05f,
-            BALL_SPEED_MIN,
-            BALL_SPEED_MAX
-        );
+        ball->speed = Clamp(ball->speed * 1.04f, BALL_SPEED_MIN, BALL_SPEED_MAX);
 
         return true;
     }

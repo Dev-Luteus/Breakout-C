@@ -5,12 +5,18 @@
 #include <raylib.h>
 #include <stdbool.h>
 
+// Ball Properties
 #define BALL_RADIUS 13.0f
 #define BALL_COLOR (Color){0xB1, 0xFF, 0xB1, 0xFF}
 #define BALL_SPEED_MIN 900.0f
 #define BALL_SPEED_MAX 1700.0f
 #define TRAIL_LENGTH 10
 #define TRAIL_SPACING 3
+
+// Ball Collision Properties
+#define MIN_VERTICAL_COMPONENT 0.3f
+#define MIN_HORIZONTAL_COMPONENT 0.2f
+#define SPEED_INCREASE_FACTOR 1.04f
 
 typedef struct
 {

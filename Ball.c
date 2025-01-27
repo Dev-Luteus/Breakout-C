@@ -51,14 +51,14 @@ void UpdateBall(Ball* ball, float deltaTime, int screenWidth, int screenHeight)
         ball->position.x = ball->radius;
         ball->direction.x = fabs(ball->direction.x);
         AdjustBallDirection(ball);
-        ball->speed = Clamp(ball->speed * 1.05f, BALL_SPEED_MIN, BALL_SPEED_MAX);
+        ball->speed = Clamp(ball->speed * SPEED_INCREASE_FACTOR, BALL_SPEED_MIN, BALL_SPEED_MAX);
     }
     else if (ball->position.x + ball->radius >= screenWidth)
     {
         ball->position.x = screenWidth - ball->radius;
         ball->direction.x = -fabs(ball->direction.x);
         AdjustBallDirection(ball);
-        ball->speed = Clamp(ball->speed * 1.05f, BALL_SPEED_MIN, BALL_SPEED_MAX);
+        ball->speed = Clamp(ball->speed * SPEED_INCREASE_FACTOR, BALL_SPEED_MIN, BALL_SPEED_MAX);
     }
 
     // Bounce ceiling
@@ -68,28 +68,26 @@ void UpdateBall(Ball* ball, float deltaTime, int screenWidth, int screenHeight)
         ball->direction.y = fabs(ball->direction.y);
 
         AdjustBallDirection(ball);
-        ball->speed = Clamp(ball->speed * 1.05f, BALL_SPEED_MIN, BALL_SPEED_MAX);
+        ball->speed = Clamp(ball->speed * SPEED_INCREASE_FACTOR, BALL_SPEED_MIN, BALL_SPEED_MAX);
     }
 }
 
 // Here I'm trying to enforce a minimum vertical component, to prevent a near-horizontal bouncing bug
 void AdjustBallDirection(Ball* ball)
 {
-    const float MIN_VERTICAL = 0.3f;
-    const float MIN_HORIZONTAL = 0.2f;
-
-    if (fabs(ball->direction.y) < MIN_VERTICAL)
+    if (fabs(ball->direction.y) < MIN_VERTICAL_COMPONENT)
     {
-        ball->direction.y = (ball->direction.y >= 0 ? MIN_VERTICAL : -MIN_VERTICAL);
+        ball->direction.y = (ball->direction.y >= 0 ? MIN_VERTICAL_COMPONENT : -MIN_VERTICAL_COMPONENT);
     }
 
-    if (fabs(ball->direction.x) < MIN_HORIZONTAL)
+    if (fabs(ball->direction.x) < MIN_HORIZONTAL_COMPONENT)
     {
-        ball->direction.x = (ball->direction.x >= 0 ? MIN_HORIZONTAL : -MIN_HORIZONTAL);
+        ball->direction.x = (ball->direction.x >= 0 ? MIN_HORIZONTAL_COMPONENT : -MIN_HORIZONTAL_COMPONENT);
     }
 
     ball->direction = MyVector2Normalize(ball->direction);
 }
+
 
 void DrawBall(Ball ball)
 {
@@ -155,7 +153,7 @@ void ShootBall(Ball* ball, Vector2 startPosition, Vector2 direction, Player play
 
         ball->speed = BALL_SPEED_MIN;
         ball->position = startPosition;
-        ball->direction = Vector2Normalize(offsetDirection);
+        ball->direction = MyVector2Normalize(offsetDirection);
         ball->active = true;
     }
 }

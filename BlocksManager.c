@@ -198,23 +198,9 @@ bool CheckBlockCollision(Block* block, Ball* ball)
             ball->direction.x += horizontalAdjust;
         }
 
-        // Prevent near-horizontal or near-vertical trajectories
-        const float MIN_COMPONENT = 0.2f;
-
-        if (fabs(ball->direction.x) < MIN_COMPONENT)
-        {
-            ball->direction.x = (ball->direction.x >= 0) ? MIN_COMPONENT : -MIN_COMPONENT;
-            ball->direction = MyVector2Normalize(ball->direction);
-        }
-        if (fabs(ball->direction.y) < MIN_COMPONENT)
-        {
-            ball->direction.y = (ball->direction.y >= 0) ? MIN_COMPONENT : -MIN_COMPONENT;
-            ball->direction = MyVector2Normalize(ball->direction);
-        }
-
-        // We must normalize the direction!
-        ball->direction = MyVector2Normalize(ball->direction);
-        ball->speed = Clamp(ball->speed * 1.04f, BALL_SPEED_MIN, BALL_SPEED_MAX);
+        // Normalizing our direction vector!
+        AdjustBallDirection(ball);
+        ball->speed = Clamp(ball->speed * SPEED_INCREASE_FACTOR, BALL_SPEED_MIN, BALL_SPEED_MAX);
 
         return true;
     }

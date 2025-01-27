@@ -4,7 +4,7 @@
 #include "Ball.h"
 #include "../include/Block.h"
 
-#define BLOCK_ROWS 5
+#define BLOCK_ROWS 2
 #define BLOCK_COLUMNS 8
 #define BLOCK_SPACING 10
 #define BLOCK_TOP_OFFSET 0.18f  // 0.15

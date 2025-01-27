@@ -10,6 +10,13 @@
 #include "Core.h"
 #include "Leaderboard.h"
 
+#define PADDING_TOP 40
+#define PADDING_SIDE 60
+#define FONT_SIZE 28
+
+#define TITLE_FONT_SIZE 72
+#define OPTIONS_FONT_SIZE 36
+
 typedef struct Game
 {
     int screenWidth;
@@ -45,6 +52,9 @@ typedef struct Game
 
     float uiUpdateTimer;
     const float UI_UPDATE_INTERVAL;
+
+    int currentLevel;
+    const int maxLevels;
 } Game;
 
 // Core!
@@ -63,5 +73,8 @@ void DrawPowerUpTimers(Game game);
 // UI!
 void DrawUI(Game* game);
 void TransitionToMenu(Game* game);
+
+// Progression!
+void LoadNextLevel(Game* game);
 
 #endif // GAME_H

@@ -107,7 +107,6 @@ void DrawMainMenu(Game game)
     const int spacing = 50;
     const int arrowSpacing = 20;
 
-
     const Vector2 menuStart =
     {
         game.screenWidth / 2,
@@ -199,6 +198,7 @@ void DrawTutorial(Game game)
     for (int i = 0; i < arraySize; i++)
     {
         int textWidth = MeasureText(controls[i], FONT_SIZE);
+
         DrawText(controls[i],
                 game.screenWidth/2 - textWidth/2,
                 startY + i * 50,

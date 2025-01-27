@@ -141,11 +141,11 @@ void ShootBall(Ball* ball, Vector2 startPosition, Vector2 direction, Player play
 
         if (IsKeyDown(KEY_RIGHT))
         {
-            offsetDirection = MyVector2Create(0.4f, -1.0f);
+            offsetDirection = MyVector2Create(0.5f, -1.0f);
         }
         else if (IsKeyDown(KEY_LEFT))
         {
-            offsetDirection = MyVector2Create(-0.4f, -1.0f);
+            offsetDirection = MyVector2Create(-0.5f, -1.0f);
         }
         else
         {

@@ -6,15 +6,6 @@
 #include <stdlib.h>
 #include <time.h>
 
-#define PADDING_TOP 40
-#define PADDING_SIDE 60
-#define FONT_SIZE 28
-
-#define TITLE_FONT_SIZE 50
-#define OPTIONS_FONT_SIZE 34
-#define OPTIONS_SPACING 150
-#define TITLE_Y_OFFSET 80
-
 Game InitGame(int width, int height)
 {
     Game game = {
@@ -42,6 +33,9 @@ Game InitGame(int width, int height)
         .leaderboard = InitLeaderboard(),
         .uiUpdateTimer = 0.0f,
         .UI_UPDATE_INTERVAL = 1.0f/30.0f, // We want to render UI at 30 fps!
+
+        .currentLevel = 1,
+        .maxLevels = 5,
     };
 
     // Player, Ball, Blocks
@@ -272,8 +266,15 @@ void UpdateGame(Game* game)
             // Check win condition
             if (AreAllBlocksDestroyed(game->blocks))
             {
-                AddLeaderboardEntry(&game->leaderboard, game->player.score, game->maxCombo);
-                game->state = WIN;
+                if (game->currentLevel == game->maxLevels)
+                {
+                    AddLeaderboardEntry(&game->leaderboard, game->player.score, game->maxCombo);
+                    game->state = WIN;
+                }
+                else
+                {
+                    game->state = LEVEL_COMPLETE;
+                }
             }
 
             // Debug power-up info
@@ -292,6 +293,13 @@ void UpdateGame(Game* game)
             UpdatePowerUps(game);
             HandlePowerUpCollisions(game);
         } break;
+
+        case LEVEL_COMPLETE:
+            if (IsKeyPressed(KEY_SPACE))
+            {
+                LoadNextLevel(game);
+            }
+        break;
 
         case GAME_OVER:
         case WIN:
@@ -366,6 +374,14 @@ void DrawUI(Game* game)
                 FONT_SIZE,
                 WHITE);
 
+            char levelText[32];
+            sprintf(levelText, "Level %d", game->currentLevel);
+            DrawText(levelText,
+                game->screenWidth/2 - MeasureText(levelText, FONT_SIZE)/2,
+                game->screenHeight - PADDING_TOP,
+                FONT_SIZE,
+                WHITE);
+
             DrawPowerUpTimers(*game);
         }
         EndTextureMode();
@@ -391,38 +407,100 @@ void DrawGame(Game game)
             case TUTORIAL:
             case LEADERBOARD:
                 DrawMainMenu(game);
-                break;
+            break;
+
+            case LEVEL_COMPLETE:
+            {
+                const char* completeText = "LEVEL COMPLETE!";
+                const char* nextText = "Press SPACE for next level";
+
+                char levelText[32];
+                sprintf(levelText, "Level %d Complete!", game.currentLevel);
+
+                int titleWidth = MeasureText(levelText, TITLE_FONT_SIZE);
+                int completeWidth = MeasureText(completeText, OPTIONS_FONT_SIZE);
+                int nextWidth = MeasureText(nextText, OPTIONS_FONT_SIZE);
+
+                int baseY = game.screenHeight/2 - 200;
+                int normalSpacing = 60;
+                int titleSpacing = 160;
+
+                DrawText(levelText,
+                    game.screenWidth/2 - titleWidth/2,
+                    baseY,
+                    TITLE_FONT_SIZE,
+                    PLAYER_COLOR);
+
+                char scoreText[64];
+                sprintf(scoreText, "Score: %d", game.player.score);
+                DrawText(scoreText,
+                    game.screenWidth/2 - MeasureText(scoreText, OPTIONS_FONT_SIZE)/2,
+                    baseY + titleSpacing,
+                    OPTIONS_FONT_SIZE,
+                    WHITE);
+
+                DrawText(nextText,
+                    game.screenWidth/2 - nextWidth/2,
+                    baseY + titleSpacing + normalSpacing,
+                    OPTIONS_FONT_SIZE,
+                    BALL_COLOR);
+            }
+            break;
 
             case GAME_OVER:
             case WIN:
+            {
                 const char* restartText = "Press R to Restart";
                 const char* menuText = "Press Q for Menu";
-
                 const char* titleText = (game.state == WIN) ? "YOU WIN!" : "GAME OVER";
                 Color titleColor = (game.state == WIN) ? PLAYER_COLOR : PU_DAMAGE_COLOR;
 
+                char finalScoreText[64];
+                sprintf(finalScoreText, "Final Score: %d", game.player.score);
+                char maxComboText[64];
+                sprintf(maxComboText, "Max Combo: %d", game.maxCombo);
+
                 int titleWidth = MeasureText(titleText, TITLE_FONT_SIZE);
+                int scoreWidth = MeasureText(finalScoreText, OPTIONS_FONT_SIZE);
+                int comboWidth = MeasureText(maxComboText, OPTIONS_FONT_SIZE);
                 int restartWidth = MeasureText(restartText, OPTIONS_FONT_SIZE);
                 int menuWidth = MeasureText(menuText, OPTIONS_FONT_SIZE);
 
+                int baseY = game.screenHeight/2 - 200;
+                int normalSpacing = 60;
+                int titleSpacing = 160;
+
                 DrawText(titleText,
                     game.screenWidth/2 - titleWidth/2,
-                    game.screenHeight/2 - TITLE_Y_OFFSET,
+                    baseY,
                     TITLE_FONT_SIZE,
                     titleColor);
 
+                DrawText(finalScoreText,
+                    game.screenWidth/2 - scoreWidth/2,
+                    baseY + titleSpacing,
+                    OPTIONS_FONT_SIZE,
+                    WHITE);
+
+                DrawText(maxComboText,
+                    game.screenWidth/2 - comboWidth/2,
+                    baseY + titleSpacing + normalSpacing,
+                    OPTIONS_FONT_SIZE,
+                    PLAYER_COLOR);
+
                 DrawText(restartText,
                     game.screenWidth/2 - restartWidth/2,
-                    game.screenHeight/2,
+                    baseY + titleSpacing + normalSpacing * 2,
                     OPTIONS_FONT_SIZE,
                     BALL_COLOR);
 
                 DrawText(menuText,
                     game.screenWidth/2 - menuWidth/2,
-                    game.screenHeight/2 + OPTIONS_SPACING,
+                    baseY + titleSpacing + normalSpacing * 3,
                     OPTIONS_FONT_SIZE,
                     PU_SPEED_COLOR);
-                break;
+            }
+            break;
         }
     }
     EndTextureMode();
@@ -466,6 +544,33 @@ void TransitionToMenu(Game* game)
     EndTextureMode();
 }
 
+void LoadNextLevel(Game* game)
+{
+    game->currentLevel++;
+
+    game->ball = InitBall((Vector2)
+    {
+        game->player.position.x + game->player.width / 2,
+        game->player.position.y - 20
+    });
+
+    game->ball.active = false;
+
+    InitBlocks(game->blocks, game->screenWidth, game->screenHeight);
+
+    game->ball.speed += 50.0f;
+    game->player.width = fmax(40, game->player.width - 10); // min 40
+
+    game->powerUpCount = 0;
+
+    for (int i = 0; i < 10; i++)
+    {
+        game->powerUps[i].active = false;
+    }
+
+    game->state = PLAYING;
+}
+
 // Reinitialise everything on reset 'R' !
 void ResetGame(Game* game)
 {
@@ -483,6 +588,10 @@ void ResetGame(Game* game)
     // Default values
     game->player = InitPlayer(game->screenWidth, game->screenHeight);
     game->ball = InitBall((Vector2){0, 0});
+    game->player.score = 0;
+    game->currentLevel = 1;
+    game->ball.speed = BALL_SPEED_MIN;
+    game->player.width = game->player.baseWidth;
 
     InitBlocks(game->blocks, game->screenWidth, game->screenHeight);
     game->state = PLAYING;

@@ -7,6 +7,7 @@ typedef enum GameState
     TUTORIAL,
     LEADERBOARD,
     PLAYING,
+    LEVEL_COMPLETE,
     GAME_OVER,
     WIN
 } GameState;

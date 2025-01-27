@@ -33,7 +33,7 @@ typedef struct Game
 
     Player player;
     Ball ball;
-    Block blocks[BLOCK_ROWS][BLOCK_COLUMNS];
+    Block blocks[MAX_BLOCK_ROWS][BLOCK_COLUMNS];
 
     int combo;
     int maxCombo;
@@ -55,6 +55,7 @@ typedef struct Game
 
     int currentLevel;
     const int maxLevels;
+    int currentBlockRows;
 } Game;
 
 // Core!
@@ -76,5 +77,6 @@ void TransitionToMenu(Game* game);
 
 // Progression!
 void LoadNextLevel(Game* game);
+int CalculateLevelBonus(int level, int currentScore);
 
 #endif // GAME_H

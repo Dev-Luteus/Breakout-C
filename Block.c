@@ -23,7 +23,7 @@ Block InitBlock(int x, int y, int width, int height, int row)
     block.position = (Vector2) {x, y};
     block.width = width;
     block.height = height;
-    block.lives = BLOCK_ROWS+1 - row;
+    block.lives = MAX_BLOCK_ROWS - row;
     block.color = GetBlockColor(block.lives);
     block.active = true;
 

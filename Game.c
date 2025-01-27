@@ -3,6 +3,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <PowerUp.h>
+#include <raymath.h>
 #include <stdlib.h>
 #include <time.h>
 
@@ -34,9 +35,19 @@ Game InitGame(int width, int height)
         .uiUpdateTimer = 0.0f,
         .UI_UPDATE_INTERVAL = 1.0f/30.0f, // We want to render UI at 30 fps!
 
+        .inMenu = true,
+        .shouldClose = false,
         .currentLevel = 1,
         .maxLevels = 5,
+        .currentBlockRows = MIN_BLOCK_ROWS,
+        .player.score = 0,
     };
+
+    game.gameTexture = LoadRenderTexture(width, height);
+    game.background = InitBackground(width, height);
+
+    // Initialise blocks before player/etc
+    InitBlocks(game.blocks, width, height, game.currentBlockRows);
 
     // Player, Ball, Blocks
     game.player = InitPlayer(width, height);
@@ -48,7 +59,7 @@ Game InitGame(int width, int height)
 
     game.ball = InitBall(initialBallPos);
 
-    InitBlocks(game.blocks, width, height);
+    InitBlocks(game.blocks, width, height, game.currentBlockRows);
 
     // Initialize all powerups to inactive
     for (int i = 0; i < 10; i++)
@@ -94,7 +105,7 @@ void HandleCollisions (Game* game)
     }
 
     // Give score to the player on ball/block collision and combo!
-    for (int row = 0; row < BLOCK_ROWS; row++)
+    for (int row = 0; row < game->currentBlockRows; row++)
     {
         for (int col = 0; col < BLOCK_COLUMNS; col++)
         {
@@ -212,86 +223,89 @@ void UpdateGame(Game* game)
 
         case PLAYING:
         {
-            if (game->lastScoreTimer > 0)
+            if (!game->inMenu)
             {
-                game->lastScoreTimer -= deltaTime;
-            }
-
-            // Update player movement and trail
-            UpdatePlayerMovement(&game->player, deltaTime, game->screenWidth);
-
-            // Ball shooting
-            if (IsKeyPressed(KEY_SPACE) && !game->ball.active)
-            {
-                Vector2 startPosition = MyVector2Create(
-                    game->player.position.x + game->player.width / 2,
-                    game->player.position.y - game->ball.radius
-                );
-
-                Vector2 initialDirection = MyVector2Create(0, -1);
-                ShootBall(&game->ball, startPosition, initialDirection, game->player);
-            }
-
-            // Update ball and handle screen collisions!
-            // I want to make sure my ball can bounce on screen edges, but also create a "killZone" at the bottom!
-            if (game->ball.active)
-            {
-                UpdateBall(&game->ball, deltaTime, game->screenWidth, game->screenHeight);
-                HandleCollisions(game);
-
-                // Here I handle our Killzone!
-                if (game->ball.position.y > game->screenHeight)
+                if (game->lastScoreTimer > 0)
                 {
-                    game->player.lives--;
-                    game->ball.active = false;
-                    game->combo = 0;  // Reset combo
+                    game->lastScoreTimer -= deltaTime;
+                }
 
-                    if (game->player.lives <= 0)
+                // Update player movement and trail
+                UpdatePlayerMovement(&game->player, deltaTime, game->screenWidth);
+
+                // Ball shooting
+                if (IsKeyPressed(KEY_SPACE) && !game->ball.active)
+                {
+                    Vector2 startPosition = MyVector2Create(
+                        game->player.position.x + game->player.width / 2,
+                        game->player.position.y - game->ball.radius
+                    );
+
+                    Vector2 initialDirection = MyVector2Create(0, -1);
+                    ShootBall(&game->ball, startPosition, initialDirection, game->player);
+                }
+
+                // Update ball and handle screen collisions!
+                // I want to make sure my ball can bounce on screen edges, but also create a "killZone" at the bottom!
+                if (game->ball.active)
+                {
+                    UpdateBall(&game->ball, deltaTime, game->screenWidth, game->screenHeight);
+                    HandleCollisions(game);
+
+                    // Here I handle our Killzone!
+                    if (game->ball.position.y > game->screenHeight)
                     {
-                        AddLeaderboardEntry(&game->leaderboard, game->player.score, game->maxCombo);
-                        game->state = GAME_OVER;
+                        game->player.lives--;
+                        game->ball.active = false;
+                        game->combo = 0;  // Reset combo
+
+                        if (game->player.lives <= 0)
+                        {
+                            AddLeaderboardEntry(&game->leaderboard, game->player.score, game->maxCombo);
+                            game->state = GAME_OVER;
+                        }
                     }
                 }
-            }
-            else // Ball is not active
-            {
-                // Update ball position to follow player when not launched
-                game->ball.position = MyVector2Create
-                (
-                    game->player.position.x + game->player.width / 2,
-                    game->player.position.y - game->ball.radius
-                );
-            }
-
-            // Check win condition
-            if (AreAllBlocksDestroyed(game->blocks))
-            {
-                if (game->currentLevel == game->maxLevels)
+                else // Ball is not active
                 {
-                    AddLeaderboardEntry(&game->leaderboard, game->player.score, game->maxCombo);
-                    game->state = WIN;
+                    // Update ball position to follow player when not launched
+                    game->ball.position = MyVector2Create
+                    (
+                        game->player.position.x + game->player.width / 2,
+                        game->player.position.y - game->ball.radius
+                    );
                 }
-                else
+
+                // Check win condition
+                if (AreAllBlocksDestroyed(game->blocks, game->currentBlockRows))
                 {
-                    game->state = LEVEL_COMPLETE;
+                    if (game->currentLevel == game->maxLevels)
+                    {
+                        AddLeaderboardEntry(&game->leaderboard, game->player.score, game->maxCombo);
+                        game->state = WIN;
+                    }
+                    else
+                    {
+                        game->state = LEVEL_COMPLETE;
+                    }
                 }
-            }
 
-            // Debug power-up info
-            for (int i = 0; i < PU_MAX_COUNT; i++)
-            {
-                PowerUp* powerUp = &game->powerUps[i];
-
-                if (powerUp->active && powerUp->wasPickedUp)
+                // Debug power-up info
+                for (int i = 0; i < PU_MAX_COUNT; i++)
                 {
-                    printf("Active powerup %d: %.2f remaining, active=%d, picked=%d\n",
-                           powerUp->type, powerUp->remainingDuration,
-                           powerUp->active, powerUp->wasPickedUp);
-                }
-            }
+                    PowerUp* powerUp = &game->powerUps[i];
 
-            UpdatePowerUps(game);
-            HandlePowerUpCollisions(game);
+                    if (powerUp->active && powerUp->wasPickedUp)
+                    {
+                        printf("Active powerup %d: %.2f remaining, active=%d, picked=%d\n",
+                               powerUp->type, powerUp->remainingDuration,
+                               powerUp->active, powerUp->wasPickedUp);
+                    }
+                }
+
+                UpdatePowerUps(game);
+                HandlePowerUpCollisions(game);
+            }
         } break;
 
         case LEVEL_COMPLETE:
@@ -320,11 +334,12 @@ void UpdateGame(Game* game)
 void DrawUI(Game* game)
 {
     BeginTextureMode(game->background.uiTexture);
-    {
-        if (game->state == PLAYING)
-        {
-            ClearBackground(BLANK);
+    ClearBackground(BLANK);
 
+    BeginTextureMode(game->background.uiTexture);
+    {
+        if (game->state == PLAYING && !game->inMenu)
+        {
             char comboText[64];
 
             if (game->combo > 0)
@@ -376,11 +391,12 @@ void DrawUI(Game* game)
 
             char levelText[32];
             sprintf(levelText, "Level %d", game->currentLevel);
+            int levelTextWidth = MeasureText(levelText, FONT_SIZE);
             DrawText(levelText,
-                game->screenWidth/2 - MeasureText(levelText, FONT_SIZE)/2,
-                game->screenHeight - PADDING_TOP,
+                game->screenWidth - levelTextWidth - PADDING_SIDE,
+                game->screenHeight - PADDING_TOP * 1.5,
                 FONT_SIZE,
-                WHITE);
+                BALL_COLOR);
 
             DrawPowerUpTimers(*game);
         }
@@ -398,7 +414,7 @@ void DrawGame(Game game)
         {
             case PLAYING:
                 DrawPlayerWithTrail(&game.player);
-                DrawBlocks(game.blocks);
+                DrawBlocks(game.blocks, game.currentBlockRows);
                 DrawBall(game.ball);
                 DrawPowerUps(&game);
                 break;
@@ -529,6 +545,11 @@ void TransitionToMenu(Game* game)
 {
     game->state = MAIN_MENU;
     game->selectedOption = MENU_PLAY;
+    game->inMenu = true;
+    game->combo = 0;
+    game->maxCombo = 0;
+    game->currentLevel = 1;
+    game->currentBlockRows = MIN_BLOCK_ROWS;
 
     ResetGame(game);
 
@@ -540,12 +561,16 @@ void TransitionToMenu(Game* game)
     {
         ClearBackground(BLANK);
     }
-
     EndTextureMode();
 }
 
 void LoadNextLevel(Game* game)
 {
+    int levelBonus = CalculateLevelBonus(game->currentLevel, game->player.score);
+    game->player.score += levelBonus;
+    game->lastScoreGained = levelBonus;
+    game->lastScoreTimer = 2.0f;
+
     game->currentLevel++;
 
     game->ball = InitBall((Vector2)
@@ -554,10 +579,11 @@ void LoadNextLevel(Game* game)
         game->player.position.y - 20
     });
 
+    game->currentBlockRows = Clamp(MIN_BLOCK_ROWS + (game->currentLevel - 1),
+                                MIN_BLOCK_ROWS,
+                                MAX_BLOCK_ROWS);
+
     game->ball.active = false;
-
-    InitBlocks(game->blocks, game->screenWidth, game->screenHeight);
-
     game->ball.speed += 50.0f;
     game->player.width = fmax(40, game->player.width - 10); // min 40
 
@@ -568,7 +594,16 @@ void LoadNextLevel(Game* game)
         game->powerUps[i].active = false;
     }
 
+    InitBlocks(game->blocks, game->screenWidth, game->screenHeight, game->currentBlockRows);
     game->state = PLAYING;
+}
+
+int CalculateLevelBonus(int level, int currentScore)
+{
+    int baseBonus = 1000 * level;
+    int scoreBonus = currentScore * 0.25f;
+
+    return baseBonus + scoreBonus;
 }
 
 // Reinitialise everything on reset 'R' !
@@ -588,11 +623,15 @@ void ResetGame(Game* game)
     // Default values
     game->player = InitPlayer(game->screenWidth, game->screenHeight);
     game->ball = InitBall((Vector2){0, 0});
-    game->player.score = 0;
+
+    game->combo = 0;
+    game->maxCombo = 0;
     game->currentLevel = 1;
+    game->currentBlockRows = MIN_BLOCK_ROWS;
     game->ball.speed = BALL_SPEED_MIN;
     game->player.width = game->player.baseWidth;
+    game->player.score = 0;
 
-    InitBlocks(game->blocks, game->screenWidth, game->screenHeight);
+    InitBlocks(game->blocks, game->screenWidth, game->screenHeight, game->currentBlockRows);
     game->state = PLAYING;
 }

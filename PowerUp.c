@@ -253,15 +253,24 @@ void UpdatePowerUps(Game* game)
             continue;
         }
 
+        // Here, we're adding a validation check to prevent out of bounds power-up types
+        if (powerUp->type >= POWERUP_COUNT)
+        {
+            powerUp->active = false;
+            game->powerUpCount = (game->powerUpCount > 0) ? game->powerUpCount - 1 : 0;
+
+            continue;
+        }
+
         if (!powerUp->wasPickedUp)
         {
-            UpdatePowerUp(powerUp, deltaTime * game->timeScale); // Update falling
+            UpdatePowerUp(powerUp, deltaTime * game->timeScale);
 
             // Check for killZone
             if (powerUp->position.y > game->screenHeight)
             {
                 powerUp->active = false;
-                game->powerUpCount--;
+                game->powerUpCount = (game->powerUpCount > 0) ? game->powerUpCount - 1 : 0;
             }
         }
         else  // Power-up is active and was picked up
@@ -275,12 +284,10 @@ void UpdatePowerUps(Game* game)
                 {
                     case POWERUP_SPEED:
                         game->player.speed = game->player.baseSpeed;
-                        game->player.baseSpeed;
                     break;
 
                     case POWERUP_GROWTH:
                         game->player.width = game->player.baseWidth;
-                        game->player.baseWidth;
                     break;
 
                     case POWERUP_GHOST:
@@ -301,7 +308,7 @@ void UpdatePowerUps(Game* game)
 
                 powerUp->active = false;
                 powerUp->wasPickedUp = false;
-                game->powerUpCount--;
+                game->powerUpCount = (game->powerUpCount > 0) ? game->powerUpCount - 1 : 0;
             }
         }
     }

@@ -14,7 +14,7 @@ void CalculateBlockDimensions(int screenWidth, int screenHeight, float *blockWid
     *blockHeight = screenHeight * 0.03f;
 }
 
-void InitBlocks(Block blocks[BLOCK_ROWS][BLOCK_COLUMNS], int screenWidth, int screenHeight)
+void InitBlocks(Block blocks[MAX_BLOCK_ROWS][BLOCK_COLUMNS], int screenWidth, int screenHeight, int rowCount)
 {
     float blockWidth, blockHeight;
     CalculateBlockDimensions(screenWidth, screenHeight, &blockWidth, &blockHeight);
@@ -22,21 +22,46 @@ void InitBlocks(Block blocks[BLOCK_ROWS][BLOCK_COLUMNS], int screenWidth, int sc
     float startX = screenWidth * BLOCK_SIDE_OFFSET;
     float startY = screenHeight * BLOCK_TOP_OFFSET;
 
-    for (int row = 0; row < BLOCK_ROWS; row++)
+    // First we initialize all blocks to inactive
+    for (int row = 0; row < MAX_BLOCK_ROWS; row++)
+    {
+        for (int col = 0; col < BLOCK_COLUMNS; col++)
+        {
+            blocks[row][col].position = (Vector2){0, 0};
+            blocks[row][col].width = 0;
+            blocks[row][col].height = 0;
+            blocks[row][col].lives = 0;
+            blocks[row][col].color = BLACK;
+            blocks[row][col].active = false;
+        }
+    }
+
+    // Clamp rowCount to valid range
+    rowCount = Clamp(rowCount, MIN_BLOCK_ROWS, MAX_BLOCK_ROWS);
+
+    // Then initialize only the active rows
+    for (int row = 0; row < rowCount; row++)
     {
         for (int col = 0; col < BLOCK_COLUMNS; col++)
         {
             float x = startX + col * (blockWidth + BLOCK_SPACING);
             float y = startY + row * (blockHeight + BLOCK_SPACING);
 
-            blocks[row][col] = InitBlock(x, y, blockWidth, blockHeight, row);
+            blocks[row][col].position = (Vector2){x, y};
+            blocks[row][col].width = blockWidth;
+            blocks[row][col].height = blockHeight;
+            blocks[row][col].lives = rowCount - row;
+            blocks[row][col].color = GetBlockColor(blocks[row][col].lives);
+            blocks[row][col].active = true;
         }
     }
 }
 
-void DrawBlocks(Block blocks[BLOCK_ROWS][BLOCK_COLUMNS])
+void DrawBlocks(Block blocks[BLOCK_ROWS][BLOCK_COLUMNS], int rowCount)
 {
-    for (int row = 0; row < BLOCK_ROWS; ++row)
+    rowCount = Clamp(rowCount, MIN_BLOCK_ROWS, MAX_BLOCK_ROWS);
+
+    for (int row = 0; row < rowCount; ++row)
     {
         for (int col = 0; col < BLOCK_COLUMNS; ++col)
         {
@@ -175,9 +200,11 @@ bool CheckBlockCollision(Block* block, Ball* ball)
     return false;
 }
 
-bool AreAllBlocksDestroyed(Block blocks[BLOCK_ROWS][BLOCK_COLUMNS])
+bool AreAllBlocksDestroyed(Block blocks[MAX_BLOCK_ROWS][BLOCK_COLUMNS], int rowCount)
 {
-    for (int row = 0; row < BLOCK_ROWS; row++)
+    rowCount = Clamp(rowCount, MIN_BLOCK_ROWS, MAX_BLOCK_ROWS);
+
+    for (int row = 0; row < rowCount; row++)
     {
         for (int col = 0; col < BLOCK_COLUMNS; col++)
         {

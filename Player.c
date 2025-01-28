@@ -8,8 +8,8 @@ Player InitPlayer(int width, int height)
     player.position = MyVector2Create(width / 2 - 25, height - 50);
     player.baseSpeed = 1000.0f;
     player.speed = 1000.0f;
-    player.baseWidth = 140;
-    player.width = 150;
+    player.baseWidth = PLAYER_BASE_WIDTH;
+    player.width = PLAYER_BASE_WIDTH;
     player.height = 10;
     player.lives = 5;
     player.score = 0;

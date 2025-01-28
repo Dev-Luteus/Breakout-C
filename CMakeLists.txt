@@ -24,6 +24,8 @@ add_executable(
         Leaderboard.c
         include/Background.h
         Background.c
+        include/Level.h
+        Level.c
 )
 
 # Link Raylib library (and required Windows libraries)

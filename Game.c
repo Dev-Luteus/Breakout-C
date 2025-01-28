@@ -7,6 +7,8 @@
 #include <stdlib.h>
 #include <time.h>
 
+#include "Level.h"
+
 Game InitGame(int width, int height)
 {
     Game game = {
@@ -424,85 +426,7 @@ void DrawGame(Game game)
 
             case LEVEL_COMPLETE:
             {
-                const char* completeText = "LEVEL COMPLETE!";
-                const char* nextText = "Press SPACE to continue";
-
-                char levelText[32];
-                sprintf(levelText, "Level %d Complete!", game.currentLevel);
-
-                // Base score
-                char scoreText[64];
-                sprintf(scoreText, "Score: %d", game.player.score - game.lastScoreGained);
-
-                char comboText[64];
-                sprintf(comboText, "Combo: x%d", game.maxCombo);
-
-                int baseBonus = 1000 * game.currentLevel;
-                int scoreBonus = (game.player.score - game.lastScoreGained) * 0.25f;
-
-                char baseBonusText[64];
-                sprintf(baseBonusText, "Level Bonus: %d (1000 × Level %d)",
-                        baseBonus, game.currentLevel);
-
-                char scoreBonusText[64];
-                sprintf(scoreBonusText, "Score Bonus: %d (25%% of current score)",
-                        scoreBonus);
-
-                char totalBonusText[64];
-                sprintf(totalBonusText, "Total Bonus: %d", baseBonus + scoreBonus);
-
-                char finalScoreText[64];
-                sprintf(finalScoreText, "Final Score: %d", game.player.score + baseBonus + scoreBonus);
-
-                int baseY = game.screenHeight/2 - BASE_Y_OFFSET;
-
-                DrawText(levelText,
-                    game.screenWidth/2 - MeasureText(levelText, TITLE_FONT_SIZE)/2,
-                    baseY,
-                    TITLE_FONT_SIZE,
-                    PLAYER_COLOR);
-
-                DrawText(scoreText,
-                    game.screenWidth/2 - MeasureText(scoreText, OPTIONS_FONT_SIZE)/2,
-                    baseY + TITLE_SPACING,
-                    OPTIONS_FONT_SIZE,
-                    WHITE);
-
-                DrawText(comboText,
-                    game.screenWidth/2 - MeasureText(comboText, OPTIONS_FONT_SIZE)/2,
-                    baseY + TITLE_SPACING + NORMAL_SPACING,
-                    OPTIONS_FONT_SIZE,
-                    PLAYER_COLOR);
-
-                DrawText(baseBonusText,
-                    game.screenWidth/2 - MeasureText(baseBonusText, OPTIONS_FONT_SIZE)/2,
-                    baseY + TITLE_SPACING + NORMAL_SPACING * 2,
-                    OPTIONS_FONT_SIZE,
-                    GREEN);
-
-                DrawText(scoreBonusText,
-                    game.screenWidth/2 - MeasureText(scoreBonusText, OPTIONS_FONT_SIZE)/2,
-                    baseY + TITLE_SPACING + NORMAL_SPACING * 3,
-                    OPTIONS_FONT_SIZE,
-                    GREEN);
-
-                DrawText(totalBonusText,
-                    game.screenWidth/2 - MeasureText(totalBonusText, OPTIONS_FONT_SIZE)/2,
-                    baseY + TITLE_SPACING + NORMAL_SPACING * 4,
-                    OPTIONS_FONT_SIZE,
-                    GREEN);
-
-                DrawText(finalScoreText,
-                    game.screenWidth/2 - MeasureText(finalScoreText, OPTIONS_FONT_SIZE)/2,
-                    baseY + TITLE_SPACING + NORMAL_SPACING * 5,
-                    OPTIONS_FONT_SIZE,
-                    WHITE);
-
-                DrawText(nextText,
-                    game.screenWidth/2 - MeasureText(nextText, OPTIONS_FONT_SIZE)/2,
-                    baseY + TITLE_SPACING + NORMAL_SPACING * 7,
-                    OPTIONS_FONT_SIZE,
-                    BALL_COLOR);
+                DrawLevelComplete(game);
             }
             break;
 
@@ -604,74 +528,6 @@ void TransitionToMenu(Game* game)
         ClearBackground(BLANK);
     }
     EndTextureMode();
-}
-
-void LoadNextLevel(Game* game)
-{
-    // Score and Powerups
-    int currentScore = game->player.score;
-    int levelBonus = CalculateLevelBonus(game->currentLevel, currentScore);
-
-    game->lastScoreGained = levelBonus;
-    game->lastScoreTimer = SCORE_POPUP_DURATION;
-
-    game->currentLevel++;
-    game->player.score = currentScore + levelBonus;
-
-    ResetAllPowerUpEffects(game);
-
-    game->powerUpCount = 0;
-
-    for (int i = 0; i < PU_MAX_COUNT; i++)
-    {
-        game->powerUps[i].active = false;
-        game->powerUps[i].wasPickedUp = false;
-    }
-
-    // Ball, Player
-    game->ball = InitBall((Vector2)
-    {
-        game->player.position.x + game->player.width / 2,
-        game->player.position.y - 20
-    });
-
-    game->ball.active = false;
-
-    // Difficulty increase! (Speed, Player width, Blocks)
-    // Ball
-    float levelFactor = (float)(game->currentLevel - 1);
-    game->ball.currentMinSpeed = BALL_SPEED_MIN + (BALL_SPEED_INCREMENT_PER_LEVEL * levelFactor);
-    game->ball.currentMaxSpeed = BALL_SPEED_MAX + (BALL_SPEED_MAX_INCREMENT_PER_LEVEL * levelFactor);
-    game->ball.speed = game->ball.currentMinSpeed;
-
-    // Player
-    game->player.baseWidth = fmax(100, game->player.baseWidth - 15);
-    game->player.width = game->player.baseWidth;
-
-    game->combo = 0;
-
-    // Blocks
-    game->currentBlockRows = Clamp(MIN_BLOCK_ROWS + (game->currentLevel - 1),
-                                 MIN_BLOCK_ROWS,
-                                 MAX_BLOCK_ROWS);
-
-    game->currentBlockColumns = Clamp(MIN_BLOCK_COLUMNS + (game->currentLevel - 1),
-                                    MIN_BLOCK_COLUMNS,
-                                    MAX_BLOCK_COLUMNS);
-
-    InitBlocks(game->blocks, game->screenWidth, game->screenHeight,
-           game->currentBlockRows, game->currentBlockColumns,
-           game->isTimewarpActive);
-
-    game->state = PLAYING;
-}
-
-int CalculateLevelBonus(int level, int currentScore)
-{
-    int baseBonus = LEVEL_BONUS_MULTIPLIER * level;
-    int scoreBonus = currentScore * SCORE_BONUS_MULTIPLIER;
-
-    return baseBonus + scoreBonus;
 }
 
 // Reinitialise everything on reset 'R' !

@@ -17,7 +17,7 @@ typedef struct Game Game; // We do this to avoid a circular dependency, when ref
 #define PU_GROWTH_DURATION 13.0
 #define PU_DEFAULT_DURATION 0.0
 #define PU_GHOST_DURATION 1.5f
-#define PU_TIMEWARP_DURATION 6.0f
+#define PU_TIMEWARP_DURATION 7.0f
 #define PU_DAMAGE_DURATION 12.0f
 
 #define PU_MAX_COUNT 10

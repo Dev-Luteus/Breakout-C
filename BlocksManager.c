@@ -8,15 +8,35 @@
 void CalculateBlockDimensions(int screenWidth, int screenHeight, float *blockWidth, float *blockHeight, int columnCount)
 {
     float playableWidth = screenWidth * (1.0f - 2 * BLOCK_SIDE_OFFSET);
-    float totalWidth = playableWidth - (columnCount - 1) * BLOCK_SPACING;  // Need to pass columnCount parameter
+    float totalWidth = playableWidth - BLOCK_SPACING;
 
-    *blockWidth = totalWidth / columnCount;
+    *blockWidth = (totalWidth / columnCount) - BLOCK_SPACING;
     *blockHeight = screenHeight * 0.03f;
+}
+
+// Helper function to reduce code duplication and calculus repetition =)
+void ClampBlockDimensions(int* rowCount, int* columnCount)
+{
+    *rowCount = Clamp(*rowCount, MIN_BLOCK_ROWS, MAX_BLOCK_ROWS);
+    *columnCount = Clamp(*columnCount, MIN_BLOCK_COLUMNS, MAX_BLOCK_COLUMNS);
+}
+
+// Another helper function to reduce calculus and code duplication!
+void InitializeBlock(Block* block, float x, float y, float width, float height, int lives, bool isTimewarpActive)
+{
+    block->position = (Vector2){x, y};
+    block->width = width;
+    block->height = height;
+    block->lives = lives;
+    block->color = GetBlockColor(lives, isTimewarpActive);
+    block->active = true;
 }
 
 void InitBlocks(Block blocks[MAX_BLOCK_ROWS][MAX_BLOCK_COLUMNS],
                 int screenWidth, int screenHeight, int rowCount, int columnCount, bool isTimewarpActive)
 {
+    ClampBlockDimensions(&rowCount, &columnCount);
+
     float blockWidth, blockHeight;
     CalculateBlockDimensions(screenWidth, screenHeight, &blockWidth, &blockHeight, columnCount);
 
@@ -28,22 +48,10 @@ void InitBlocks(Block blocks[MAX_BLOCK_ROWS][MAX_BLOCK_COLUMNS],
     {
         for (int col = 0; col < MAX_BLOCK_COLUMNS; col++)
         {
-            blocks[row][col].position = (Vector2){0, 0};
-            blocks[row][col].width = 0;
-            blocks[row][col].height = 0;
-            blocks[row][col].lives = 0;
+            blocks[row][col] = (Block){0};  // Zero initialization
             blocks[row][col].color = BLACK;
-            blocks[row][col].active = false;
         }
     }
-
-    rowCount = Clamp(rowCount, MIN_BLOCK_ROWS, MAX_BLOCK_ROWS);
-    columnCount = Clamp(columnCount, MIN_BLOCK_COLUMNS, MAX_BLOCK_COLUMNS);
-
-    // Here, we have to calculate a new spacing in order for us to maintain centered blocks
-    float totalWidth = screenWidth * (1.0f - 2 * BLOCK_SIDE_OFFSET);
-    float blockAndSpacing = (totalWidth - BLOCK_SPACING) / columnCount;
-    blockWidth = blockAndSpacing - BLOCK_SPACING;
 
     // Initialize active blocks
     for (int row = 0; row < rowCount; row++)
@@ -52,46 +60,42 @@ void InitBlocks(Block blocks[MAX_BLOCK_ROWS][MAX_BLOCK_COLUMNS],
         {
             float x = startX + col * (blockWidth + BLOCK_SPACING);
             float y = startY + row * (blockHeight + BLOCK_SPACING);
-
-            blocks[row][col].position = (Vector2){x, y};
-            blocks[row][col].width = blockWidth;
-            blocks[row][col].height = blockHeight;
-            blocks[row][col].lives = rowCount - row;
-            blocks[row][col].color = GetBlockColor(blocks[row][col].lives, isTimewarpActive);
-            blocks[row][col].active = true;
+            InitializeBlock(&blocks[row][col], x, y, blockWidth, blockHeight,
+                          rowCount - row, isTimewarpActive);
         }
     }
 }
 
 void DrawBlocks(Block blocks[MAX_BLOCK_ROWS][MAX_BLOCK_COLUMNS], int rowCount, int columnCount)
 {
-    rowCount = Clamp(rowCount, MIN_BLOCK_ROWS, MAX_BLOCK_ROWS);
-    columnCount = Clamp(columnCount, MIN_BLOCK_COLUMNS, MAX_BLOCK_COLUMNS);
+    ClampBlockDimensions(&rowCount, &columnCount);
 
     for (int row = 0; row < rowCount; ++row)
     {
         for (int col = 0; col < columnCount; ++col)
         {
-            Block block = blocks[row][col];
-
-            if (block.active)
+            if (blocks[row][col].active)
             {
-                DrawRectangle(block.position.x, block.position.y, block.width, block.height, block.color);
-
-                // Convert our block.lives into a string array (for text)! Make space for null operator
-                char lives[2];
-                sprintf(lives, "%d", block.lives);
-
-                Vector2 textPos = MyVector2Create
-                (
-                    block.position.x + block.width/2 - 5,
-                    block.position.y + block.height/2 - 10
-                );
-
-                DrawText(lives, textPos.x, textPos.y, 20, BLACK);
+                DrawBlock(&blocks[row][col]);
             }
         }
     }
+}
+
+void DrawBlock(Block* block)
+{
+    DrawRectangle(block->position.x, block->position.y,
+                 block->width, block->height, block->color);
+
+    char lives[2];
+    sprintf(lives, "%d", block->lives);
+
+    Vector2 textPos = MyVector2Create(
+        block->position.x + block->width/2 - 5,
+        block->position.y + block->height/2 - 10
+    );
+
+    DrawText(lives, textPos.x, textPos.y, 20, BLACK);
 }
 
 bool CheckBlockCollision(Block* block, Ball* ball, bool isTimewarpActive)
@@ -211,7 +215,7 @@ bool CheckBlockCollision(Block* block, Ball* ball, bool isTimewarpActive)
                 ball->direction.x += (GetRandomValue(-5, 5) / 100.0f);
             break;
         }
-        
+
         // Normalizing our direction vector!
         AdjustBallDirection(ball);
         ball->speed = Clamp(ball->speed * SPEED_INCREASE_FACTOR, BALL_SPEED_MIN, BALL_SPEED_MAX);

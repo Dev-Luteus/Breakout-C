@@ -351,6 +351,8 @@ void UpdatePowerUps(Game* game)
                     case POWERUP_TIMEWARP:
                         game->timeScale = game->normalTimeScale;
                         game->isTimewarpActive = false;
+                        UpdateBlockColors(game->blocks, game->currentBlockRows,
+                                     game->currentBlockColumns, false);
                     break;
 
                     case POWERUP_DAMAGE:

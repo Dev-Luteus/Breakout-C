@@ -218,7 +218,8 @@ bool CheckBlockCollision(Block* block, Ball* ball, bool isTimewarpActive)
 
         // Normalizing our direction vector!
         AdjustBallDirection(ball);
-        ball->speed = Clamp(ball->speed * SPEED_INCREASE_FACTOR, BALL_SPEED_MIN, BALL_SPEED_MAX);
+        ball->speed = Clamp(ball->speed * SPEED_INCREASE_FACTOR,
+                          ball->currentMinSpeed, ball->currentMaxSpeed);
         return true;
     }
 

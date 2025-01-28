@@ -9,7 +9,7 @@
 #define BALL_RADIUS 13.0f
 #define BALL_COLOR (Color){0xB1, 0xFF, 0xB1, 0xFF}
 #define BALL_SPEED_MIN 900.0f
-#define BALL_SPEED_MAX 1700.0f
+#define BALL_SPEED_MAX 1400.0f
 #define TRAIL_LENGTH 10
 #define TRAIL_SPACING 3
 
@@ -17,6 +17,10 @@
 #define MIN_VERTICAL_COMPONENT 0.3f
 #define MIN_HORIZONTAL_COMPONENT 0.2f
 #define SPEED_INCREASE_FACTOR 1.04f
+
+// Level Bonus Properties
+#define BALL_SPEED_INCREMENT_PER_LEVEL 25.0f
+#define BALL_SPEED_MAX_INCREMENT_PER_LEVEL 75.0f
 
 typedef struct
 {
@@ -37,6 +41,9 @@ typedef struct
     bool isGhost;
     Color currentColor;
     int damageMultiplier;
+
+    float currentMinSpeed;
+    float currentMaxSpeed;
 } Ball;
 
 Ball InitBall(Vector2 position);

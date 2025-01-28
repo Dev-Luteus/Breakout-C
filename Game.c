@@ -636,9 +636,18 @@ void LoadNextLevel(Game* game)
     });
 
     game->ball.active = false;
-    game->ball.speed += 50.0f;
 
-    game->player.width = fmax(40, game->player.width - 10);
+    // Difficulty increase! (Speed, Player width, Blocks)
+    // Ball
+    float levelFactor = (float)(game->currentLevel - 1);
+    game->ball.currentMinSpeed = BALL_SPEED_MIN + (BALL_SPEED_INCREMENT_PER_LEVEL * levelFactor);
+    game->ball.currentMaxSpeed = BALL_SPEED_MAX + (BALL_SPEED_MAX_INCREMENT_PER_LEVEL * levelFactor);
+    game->ball.speed = game->ball.currentMinSpeed;
+
+    // Player
+    game->player.baseWidth = fmax(100, game->player.baseWidth - 15);
+    game->player.width = game->player.baseWidth;
+
     game->combo = 0;
 
     // Blocks

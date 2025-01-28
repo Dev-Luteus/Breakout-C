@@ -9,8 +9,12 @@ Ball InitBall(Vector2 position)
     Ball ball = {
         .position = position,
         .direction = MyVector2Zero(),
+
         .radius = BALL_RADIUS,
         .speed = BALL_SPEED_MIN,
+        .currentMinSpeed = BALL_SPEED_MIN,
+        .currentMaxSpeed = BALL_SPEED_MAX,
+
         .active = false,
         .trail = {0}, // initialise to default values
         .damageMultiplier = 1,
@@ -50,15 +54,19 @@ void UpdateBall(Ball* ball, float deltaTime, int screenWidth, int screenHeight)
     {
         ball->position.x = ball->radius;
         ball->direction.x = fabs(ball->direction.x);
+
         AdjustBallDirection(ball);
-        ball->speed = Clamp(ball->speed * SPEED_INCREASE_FACTOR, BALL_SPEED_MIN, BALL_SPEED_MAX);
+        ball->speed = Clamp(ball->speed * SPEED_INCREASE_FACTOR,
+                          ball->currentMinSpeed, ball->currentMaxSpeed);
     }
     else if (ball->position.x + ball->radius >= screenWidth)
     {
         ball->position.x = screenWidth - ball->radius;
         ball->direction.x = -fabs(ball->direction.x);
+
         AdjustBallDirection(ball);
-        ball->speed = Clamp(ball->speed * SPEED_INCREASE_FACTOR, BALL_SPEED_MIN, BALL_SPEED_MAX);
+        ball->speed = Clamp(ball->speed * SPEED_INCREASE_FACTOR,
+                          ball->currentMinSpeed, ball->currentMaxSpeed);
     }
 
     // Bounce ceiling

@@ -1,5 +1,6 @@
 ﻿#include "Background.h"
 #include <math.h>
+#include <raymath.h>
 
 Background InitBackground(int width, int height)
 {
@@ -8,6 +9,7 @@ Background InitBackground(int width, int height)
         .time = 0,
         .scanlinePos = 0,
         .phosphorColor = (Color){0, 255, 0, 255},
+        .colorTransition = 0.0f,
         .screenCurvature = 0.05f,
         .flickerIntensity = 0.4f,
         .vignetteIntensity = 0.3f,
@@ -64,7 +66,7 @@ void UpdateStaticEffects(Background* background, int width, int height)
 }
 
 // Our main update method! Here we adjust our Scanline positions!
-void UpdateBackground(Background* background, float deltaTime)
+void UpdateBackground(Background* background, float deltaTime, bool isTimewarpActive)
 {
     background->time += deltaTime;
     background->scanlinePos += 100.0f * deltaTime;
@@ -73,6 +75,42 @@ void UpdateBackground(Background* background, float deltaTime)
     {
         background->scanlinePos = 0;
     }
+
+    // Here, I'm trying to implemenet a smoooth transition to the Timewarp colour! We do this by using Lerp.
+    const float TRANSITION_SPEED = 4.0f;
+
+    if (isTimewarpActive && background->colorTransition < 1.0f)
+    {
+        background->colorTransition += deltaTime * TRANSITION_SPEED;
+
+        if (background->colorTransition > 1.0f)
+        {
+            background->colorTransition = 1.0f;
+        }
+    }
+    else if (!isTimewarpActive && background->colorTransition > 0.0f)
+    {
+        background->colorTransition -= deltaTime * TRANSITION_SPEED;
+
+        if (background->colorTransition < 0.0f)
+        {
+            background->colorTransition = 0.0f;
+        }
+    }
+
+    // Here, we actually lerp between the two colours =)
+    Color normalColor = (Color){0, 255, 0, 255};
+    Color purpleColor = BACKGROUND_PURPLE;
+
+    background->phosphorColor = (Color)
+    {
+        (unsigned char)Lerp(normalColor.r, purpleColor.r, background->colorTransition),
+        (unsigned char)Lerp(normalColor.g, purpleColor.g, background->colorTransition),
+        (unsigned char)Lerp(normalColor.b, purpleColor.b, background->colorTransition),
+        255
+    };
+
+    background->staticEffectsNeedUpdate = true;
 }
 
 /* I read about Barrel Distortion Effects and their mathematical formula equivalents.

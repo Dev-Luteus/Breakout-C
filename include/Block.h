@@ -13,6 +13,6 @@ typedef struct Block {
 } Block;
 
 Block InitBlock(int x, int y, int width, int height, int row);
-Color GetBlockColor(int lives);
+Color GetBlockColor(int lives, bool isTimewarpActive);
 
 #endif //BLOCK_H

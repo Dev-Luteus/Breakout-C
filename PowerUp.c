@@ -4,6 +4,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "BlocksManager.h"
 
 // Initialize our spawn system with balanced default values
 PowerUpSpawnSystem InitPowerUpSpawnSystem(void)
@@ -160,6 +161,9 @@ void ApplyPowerUpEffect(PowerUp* powerUp, Player* player, Game* game)
             game->timeScale = PU_TIMEWARP_MULTIPLIER;
             powerUp->duration = PU_TIMEWARP_DURATION;
             powerUp->active = true;
+            UpdateBlockColors(game->blocks, game->currentBlockRows,
+                         game->currentBlockColumns, true);
+            game->isTimewarpActive = true;
         break;
 
         case POWERUP_DAMAGE:
@@ -346,6 +350,7 @@ void UpdatePowerUps(Game* game)
 
                     case POWERUP_TIMEWARP:
                         game->timeScale = game->normalTimeScale;
+                        game->isTimewarpActive = false;
                     break;
 
                     case POWERUP_DAMAGE:
@@ -504,4 +509,5 @@ void ResetAllPowerUpEffects(Game* game)
     game->timeScale = game->normalTimeScale;
     game->ball.damageMultiplier = 1;
     game->ball.radius = BALL_RADIUS;
+    game->isTimewarpActive = false;
 }

@@ -58,6 +58,7 @@ typedef struct Game
     int powerUpCount;
     PowerUp powerUps[10];
     PowerUpSpawnSystem spawnSystem;
+    bool isTimewarpActive;
 
     float timeScale;
     float normalTimeScale;

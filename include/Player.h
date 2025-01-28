@@ -6,6 +6,7 @@
 
 #define PLAYER_SPEED_BOOST 1.5f
 #define PLAYER_COLOR (Color){0x40, 0xFF, 0x40, 0xFF}  // Bright phosphor green
+#define PLAYER_COLOR_PURPLE (Color){0x80, 0x40, 0xFF, 0xFF}  // Bright phosphor purple
 
 #define PLAYER_TRAIL_LENGTH 14
 #define PLAYER_TRAIL_SPACING 3
@@ -28,6 +29,8 @@ typedef struct Player
     int score;
     PlayerTrail trail;
     bool isDashing;
+    Color color;
+    bool isTimewarpActive;
 } Player;
 
 // Core initialization
@@ -39,5 +42,8 @@ void UpdatePlayerTrail(Player* player, Vector2 prevPosition);
 
 // Trail render
 void DrawPlayerWithTrail(const Player* player);
+
+// Color
+void UpdatePlayerColor(Player* player, bool isTimewarpActive);
 
 #endif //PLAYER_H

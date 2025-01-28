@@ -15,6 +15,7 @@
 
 #define QUAD_SIZE 32
 #define MAX_QUADS (((1920 + QUAD_SIZE - 1)/QUAD_SIZE) * ((1080 + QUAD_SIZE - 1)/QUAD_SIZE))
+#define BACKGROUND_PURPLE (Color){0x80, 0x00, 0xFF, 0xFF}    // Pure purple phosphor
 
 // CRT Quad effect!
 typedef struct {
@@ -30,6 +31,9 @@ typedef struct Background
     float scanlinePos;
 
     Color phosphorColor;
+    bool isTimewarpActive;
+    float colorTransition;
+
     float screenCurvature;
     float flickerIntensity;
     float vignetteIntensity;
@@ -48,7 +52,7 @@ typedef struct Background
 } Background;
 
 Background InitBackground(int width, int height);
-void UpdateBackground(Background* background, float deltaTime);
+void UpdateBackground(Background* background, float deltaTime, bool isTimewarpActive);
 void UpdateStaticEffects(Background* background, int width, int height);
 void DrawBackground(Background* background, int width, int height, Texture2D sourceTexture);
 void UnloadBackground(Background* background);

@@ -15,7 +15,7 @@ void CalculateBlockDimensions(int screenWidth, int screenHeight, float *blockWid
 }
 
 void InitBlocks(Block blocks[MAX_BLOCK_ROWS][MAX_BLOCK_COLUMNS],
-                int screenWidth, int screenHeight, int rowCount, int columnCount)
+                int screenWidth, int screenHeight, int rowCount, int columnCount, bool isTimewarpActive)
 {
     float blockWidth, blockHeight;
     CalculateBlockDimensions(screenWidth, screenHeight, &blockWidth, &blockHeight, columnCount);
@@ -57,7 +57,7 @@ void InitBlocks(Block blocks[MAX_BLOCK_ROWS][MAX_BLOCK_COLUMNS],
             blocks[row][col].width = blockWidth;
             blocks[row][col].height = blockHeight;
             blocks[row][col].lives = rowCount - row;
-            blocks[row][col].color = GetBlockColor(blocks[row][col].lives);
+            blocks[row][col].color = GetBlockColor(blocks[row][col].lives, isTimewarpActive);
             blocks[row][col].active = true;
         }
     }
@@ -94,7 +94,7 @@ void DrawBlocks(Block blocks[MAX_BLOCK_ROWS][MAX_BLOCK_COLUMNS], int rowCount, i
     }
 }
 
-bool CheckBlockCollision(Block* block, Ball* ball)
+bool CheckBlockCollision(Block* block, Ball* ball, bool isTimewarpActive)
 {
     if (!block->active)
     {
@@ -102,7 +102,8 @@ bool CheckBlockCollision(Block* block, Ball* ball)
     }
 
     // To prevent the ball from going through gaps it shouldn't, we expand the blocsk radius
-    Rectangle expandedBlock = {
+    Rectangle expandedBlock =
+    {
         block->position.x - ball->radius,
         block->position.y - ball->radius,
         block->width + (ball->radius * 2),
@@ -138,7 +139,8 @@ bool CheckBlockCollision(Block* block, Ball* ball)
     /* Here, we then calculate the distance between the closest point, and our ball's center
      * We do this to get the squared distance between the two points, which we then use to:
      * Compare the squared distance to the squared radius of the ball, to determine if a collision occurred
-     *
+     * Pythagoras:
+     * distanceSquared = (Cx - Px)² + (Cy - Py), aka:
      * distanceSquared = (closestX−ball.centerX)^2 + (closestY−ball.centerY)^2 (pythagoras)
      */
     Vector2 closestPoint = MyVector2Create(closestX, closestY);
@@ -157,51 +159,62 @@ bool CheckBlockCollision(Block* block, Ball* ball)
         }
         else
         {
-            block->color = GetBlockColor(block->lives);
+            block->color = GetBlockColor(block->lives, isTimewarpActive);
         }
 
-        // Here we calculate a blocks center, to help determine which angle to reflect the ball
-        Vector2 blockCenter = MyVector2Create
-        (
-            block->position.x + block->width/2,
-            block->position.y + block->height/2
-        );
-
-        /* Here we normalize the distance relative to the block, and determine which side was hit
-         * normalizedX / Y in this instance becomes a range beetween: −1, 1
-         */
-        Vector2 collisionPoint = MyVector2Subtract(ball->position, blockCenter);
-        float normalizedX = collisionPoint.x / (block->width/2 + ball->radius);
-        float normalizedY = collisionPoint.y / (block->height/2 + ball->radius);
-
-        /* Fabs = Absolute value
-         * Here, we determine which collision face is hit, and also attempt to handle corner cases
-         * Fabs > 0.8f means that the ball is close to the corner! */
-        if (fabs(normalizedX) > 0.8f && fabs(normalizedY) > 0.8f)
+        // Here, we make calculate the actual blocks width for precise reflection ( minus the ball radius )
+        Rectangle actualBlock =
         {
-            ball->direction.x *= -1;
-            ball->direction.y *= -1;
-        }
-        else if (fabs(normalizedX) > fabs(normalizedY)) // Side collision
+            block->position.x,
+            block->position.y,
+            block->width,
+            block->height
+        };
+
+        // I revised the algorithm to use *depth calculation* instead of distance calculation
+        float leftDepth = ball->position.x + ball->radius - actualBlock.x;
+        float rightDepth = actualBlock.x + actualBlock.width - (ball->position.x - ball->radius);
+        float topDepth = ball->position.y + ball->radius - actualBlock.y;
+        float bottomDepth = actualBlock.y + actualBlock.height - (ball->position.y - ball->radius);
+
+        float minDepth = leftDepth;
+        int collisionSide = 0; // 0: left, 1: right, 2: top, 3: bottom
+
+        if (rightDepth < minDepth)
         {
-            ball->direction.x *= -1;
-
-            // Here, we adjust the vertical position to prevent horizontal locking! (horizontal bounce)
-            float verticalAdjust = (GetRandomValue(-10, 10) / 100.0f);
-            ball->direction.y += verticalAdjust;
+            minDepth = rightDepth;
+            collisionSide = 1;
         }
-        else // Top Bottom
+        if (topDepth < minDepth)
         {
-            ball->direction.y *= -1;
-
-            float horizontalAdjust = (GetRandomValue(-10, 10) / 100.0f);
-            ball->direction.x += horizontalAdjust;
+            minDepth = topDepth;
+            collisionSide = 2;
+        }
+        if (bottomDepth < minDepth)
+        {
+            minDepth = bottomDepth;
+            collisionSide = 3;
         }
 
+        // This is where we actually apply the reflection based on the side of the block!
+        switch (collisionSide)
+        {
+            case 0: // Left
+            case 1: // Right
+                ball->direction.x *= -1;
+                ball->direction.y += (GetRandomValue(-5, 5) / 100.0f);
+            break;
+
+            case 2: // Top
+            case 3: // Bottom
+                ball->direction.y *= -1;
+                ball->direction.x += (GetRandomValue(-5, 5) / 100.0f);
+            break;
+        }
+        
         // Normalizing our direction vector!
         AdjustBallDirection(ball);
         ball->speed = Clamp(ball->speed * SPEED_INCREASE_FACTOR, BALL_SPEED_MIN, BALL_SPEED_MAX);
-
         return true;
     }
 
@@ -224,4 +237,23 @@ bool AreAllBlocksDestroyed(Block blocks[MAX_BLOCK_ROWS][MAX_BLOCK_COLUMNS], int 
         }
     }
     return true;
+}
+
+void UpdateBlockColors(Block blocks[MAX_BLOCK_ROWS][MAX_BLOCK_COLUMNS],
+                      int rowCount, int columnCount,
+                      bool isTimewarpActive)
+{
+    rowCount = Clamp(rowCount, MIN_BLOCK_ROWS, MAX_BLOCK_ROWS);
+    columnCount = Clamp(columnCount, MIN_BLOCK_COLUMNS, MAX_BLOCK_COLUMNS);
+
+    for (int row = 0; row < rowCount; row++)
+    {
+        for (int col = 0; col < columnCount; col++)
+        {
+            if (blocks[row][col].active)
+            {
+                blocks[row][col].color = GetBlockColor(blocks[row][col].lives, isTimewarpActive);
+            }
+        }
+    }
 }

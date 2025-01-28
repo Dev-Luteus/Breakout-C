@@ -14,6 +14,7 @@ Player InitPlayer(int width, int height)
     player.lives = 5;
     player.score = 0;
     player.isDashing = false;
+    player.color = PLAYER_COLOR;
 
     // Initialize trail positions
     for (int i = 0; i < PLAYER_TRAIL_LENGTH; i++)
@@ -106,9 +107,9 @@ void DrawPlayerWithTrail(const Player* player)
 
             Color trailColor =
             {
-                PLAYER_COLOR.r,
-                PLAYER_COLOR.g,
-                PLAYER_COLOR.b,
+                player->color.r,  // Use player's current color
+                player->color.g,
+                player->color.b,
                 (unsigned char)(alpha * 255) // Convert 0-1 to 0-255
             };
 
@@ -122,7 +123,7 @@ void DrawPlayerWithTrail(const Player* player)
                 trailPos.y,
                 scaledWidth,
                 player->height,
-                trailColor
+                player->color
             );
         }
     }
@@ -134,6 +135,10 @@ void DrawPlayerWithTrail(const Player* player)
         player->position.y,
         player->width,
         player->height,
-        PLAYER_COLOR
+        player->color
     );
+}
+void UpdatePlayerColor(Player* player, bool isTimewarpActive)
+{
+    player->color = isTimewarpActive ? PLAYER_COLOR_PURPLE : PLAYER_COLOR;
 }

@@ -27,7 +27,7 @@ Game InitGame(int width, int height)
 
         .powerUpCount = 0,
         .spawnSystem = InitPowerUpSpawnSystem(),
-
+        .isTimewarpActive = false,
         .timeScale = 1.0f,
         .normalTimeScale = 1.0f,
 
@@ -48,7 +48,7 @@ Game InitGame(int width, int height)
     game.background = InitBackground(width, height);
 
     // Initialise blocks before player/etc
-    InitBlocks(game.blocks, width, height, game.currentBlockRows, game.currentBlockColumns);
+    InitBlocks(game.blocks, width, height, game.currentBlockRows, game.currentBlockColumns, game.isTimewarpActive);
 
     // Player, Ball, Blocks
     game.player = InitPlayer(width, height);
@@ -59,8 +59,6 @@ Game InitGame(int width, int height)
     );
 
     game.ball = InitBall(initialBallPos);
-
-    InitBlocks(game.blocks, width, height, game.currentBlockRows, game.currentBlockColumns);
 
     // Initialize all powerups to inactive
     for (int i = 0; i < 10; i++)
@@ -110,7 +108,7 @@ void HandleCollisions (Game* game)
     {
         for (int col = 0; col < game->currentBlockColumns; col++)
         {
-            if (CheckBlockCollision(&game->blocks[row][col], &game->ball))
+            if (CheckBlockCollision(&game->blocks[row][col], &game->ball, game->isTimewarpActive))
             {
                 game->combo++;
                 game->maxCombo = fmax(game->combo, game->maxCombo);
@@ -186,7 +184,8 @@ void UpdateGame(Game* game)
 {
     float deltaTime = GetFrameTime() * game->timeScale;
     game->spawnSystem.cooldownTimer -= deltaTime; // power ups
-    UpdateBackground(&game->background, deltaTime);
+    UpdateBackground(&game->background, deltaTime, game->isTimewarpActive);
+    UpdatePlayerColor(&game->player, game->isTimewarpActive);
 
     /* We've seperated UI onto a different layer from the game.
      * Many games I play tend to render UI at lower framerates to save on performance
@@ -622,6 +621,7 @@ void LoadNextLevel(Game* game)
     ResetAllPowerUpEffects(game);
 
     game->powerUpCount = 0;
+
     for (int i = 0; i < PU_MAX_COUNT; i++)
     {
         game->powerUps[i].active = false;
@@ -651,7 +651,8 @@ void LoadNextLevel(Game* game)
                                     MAX_BLOCK_COLUMNS);
 
     InitBlocks(game->blocks, game->screenWidth, game->screenHeight,
-               game->currentBlockRows, game->currentBlockColumns);
+           game->currentBlockRows, game->currentBlockColumns,
+           game->isTimewarpActive);
 
     game->state = PLAYING;
 }
@@ -692,7 +693,8 @@ void ResetGame(Game* game)
     game->player.score = 0;
 
     InitBlocks(game->blocks, game->screenWidth, game->screenHeight,
-               game->currentBlockRows, game->currentBlockColumns);
+           game->currentBlockRows, game->currentBlockColumns,
+           game->isTimewarpActive);
 
     game->state = PLAYING;
 }

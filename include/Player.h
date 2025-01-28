@@ -8,8 +8,8 @@
 #define PLAYER_COLOR (Color){0x40, 0xFF, 0x40, 0xFF}  // Bright phosphor green
 #define PLAYER_COLOR_PURPLE (Color){0x80, 0x40, 0xFF, 0xFF}  // Bright phosphor purple
 
-#define PLAYER_TRAIL_LENGTH 14
-#define PLAYER_TRAIL_SPACING 3
+#define PLAYER_TRAIL_LENGTH 16
+#define PLAYER_TRAIL_SPACING 10
 
 #define PLAYER_BASE_WIDTH 150
 typedef struct

@@ -123,7 +123,7 @@ void DrawPlayerWithTrail(const Player* player)
                 trailPos.y,
                 scaledWidth,
                 player->height,
-                player->color
+                trailColor
             );
         }
     }

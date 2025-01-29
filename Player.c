@@ -8,9 +8,11 @@ Player InitPlayer(int width, int height)
     player.position = MyVector2Create(width / 2 - 25, height - 50);
     player.baseSpeed = 1000.0f;
     player.speed = 1000.0f;
+
     player.baseWidth = PLAYER_BASE_WIDTH;
     player.width = PLAYER_BASE_WIDTH;
     player.height = 10;
+
     player.lives = 5;
     player.score = 0;
     player.isDashing = false;
@@ -56,6 +58,7 @@ void UpdatePlayerMovement(Player* player, float deltaTime, float screenWidth)
     // Check if we just started dashing
     if (shouldDash && !wasDashing)
     {
+        // Here we reset the trail to the current position
         for (int i = 0; i < PLAYER_TRAIL_LENGTH; i++)
         {
             player->trail.positions[i] = player->position;
@@ -81,7 +84,9 @@ void UpdatePlayerMovement(Player* player, float deltaTime, float screenWidth)
 
 void UpdatePlayerTrail(Player* player, Vector2 prevPosition)
 {
+    // Store the previous position
     player->trail.positions[player->trail.currentIndex] = prevPosition;
+    // Move to next position, wrap if needed
     player->trail.currentIndex = (player->trail.currentIndex + 1) % PLAYER_TRAIL_LENGTH;
 }
 
@@ -91,6 +96,7 @@ void DrawPlayerWithTrail(const Player* player)
     {
         Vector2 prevPos = player->position;
 
+        // We simply initialise all of our trail positions to the player's current position
         for (int i = 0; i < PLAYER_TRAIL_LENGTH; i++)
         {
             Vector2 trailPos = player->trail.positions
@@ -117,6 +123,7 @@ void DrawPlayerWithTrail(const Player* player)
             float scaledWidth = player->width * widthScale;
             float xOffset = (player->width - scaledWidth) / 2;
 
+            // Drawing our trail ^^
             DrawRectangle
             (
                 trailPos.x + xOffset,

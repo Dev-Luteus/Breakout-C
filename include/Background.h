@@ -46,7 +46,7 @@ typedef struct Background
     bool distortionNeedsUpdate;
     float lastCurvature;
 
-    RenderTexture2D staticEffects;    // Static effects
+    RenderTexture2D staticEffects;
     RenderTexture2D uiTexture;
     bool staticEffectsNeedUpdate;
 } Background;

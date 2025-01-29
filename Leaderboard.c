@@ -21,8 +21,9 @@ bool SaveLeaderboard(const Leaderboard* leaderboard)
         return false;
     }
 
-    // Here we're writing our leaderboard struct in bytes to our save file
-    // size_t fwrite(const void *ptr, size_t size, size_t count, FILE *stream);
+    /* Here we're writing our leaderboard struct in bytes to our save file
+     * size_t fwrite(const void *ptr, size_t size, size_t count, FILE *stream);
+     */
     size_t written = fwrite(leaderboard, sizeof(Leaderboard), 1, file);
     fclose(file);
 

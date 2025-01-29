@@ -10,20 +10,22 @@ Background InitBackground(int width, int height)
         .scanlinePos = 0,
         .phosphorColor = (Color){0, 255, 0, 255},
         .colorTransition = 0.0f,
-        .screenCurvature = 0.05f,
+        .screenCurvature = 0.05f, // Current Curvature!
         .flickerIntensity = 0.4f,
         .vignetteIntensity = 0.3f,
         .scanlineIntensity = 1.0f,
 
         .effectTexture = LoadRenderTexture(width, height),
         .finalTexture = LoadRenderTexture(width, height),
+
+        // Allocate memory for all possible quads (size of struct)
         .quadCache = (DistortedQuad*)MemAlloc(MAX_QUADS * sizeof(DistortedQuad)),
         .distortionNeedsUpdate = true,
-        .lastCurvature = 0.05f, // We use this to cache our screen curvature values!
+        .lastCurvature = 0.05f, // Curvature Cache! We use this to cache our screen curvature values!
 
         .staticEffects = LoadRenderTexture(width, height),
         .uiTexture = LoadRenderTexture(width, height),
-        .staticEffectsNeedUpdate = true,
+        .staticEffectsNeedUpdate = true, // Here, we force our first calculation of static effects
     };
 
     UpdateStaticEffects(&background, width, height);
@@ -55,6 +57,7 @@ void UpdateStaticEffects(Background* background, int width, int height)
 
         // Vignette effect!
         float vignetteSize = (float)width * 0.8f;
+
         DrawCircleGradient(width/2, height/2,
                           vignetteSize,
                           (Color){0, 0, 0, 0},
@@ -102,6 +105,7 @@ void UpdateBackground(Background* background, float deltaTime, bool isTimewarpAc
     Color normalColor = (Color){0, 255, 0, 255};
     Color purpleColor = BACKGROUND_PURPLE;
 
+    // Set background colour to a new colour!
     background->phosphorColor = (Color)
     {
         (unsigned char)Lerp(normalColor.r, purpleColor.r, background->colorTransition),
@@ -150,10 +154,10 @@ Vector2 DistortPoint(Vector2 point, Vector2 center, float curveAmount, int width
 void DrawBackground(Background* background, int width, int height, Texture2D gameScreen)
 {
     // Update effects if needed ( we do this in Init too )
-    UpdateStaticEffects(background, width, height);
+    UpdateStaticEffects(background, width, height); // background->staticEffects
 
     // Drawing our dynamic animated effects!
-    BeginTextureMode(background->effectTexture);
+    BeginTextureMode(background->effectTexture); // background->effectTexture
     {
         ClearBackground(BLANK);
 
@@ -170,7 +174,7 @@ void DrawBackground(Background* background, int width, int height, Texture2D gam
     EndTextureMode();
 
     // We now compose and apply the barrel distortion to the final image
-    BeginTextureMode(background->finalTexture);
+    BeginTextureMode(background->finalTexture); // background->finalTexture
     {
         ClearBackground(BLACK);
         Vector2 center = {width/2.0f, height/2.0f};
@@ -178,6 +182,11 @@ void DrawBackground(Background* background, int width, int height, Texture2D gam
         // In order to not flood our memory, here I'm trying to only update distortion if needed
         if (background->screenCurvature != background->lastCurvature)
         {
+            /* Curvature changed: recalculate distortion.
+             * In our current implementation, we never change our screen curvature. But I put this here:
+             * Because if in the future I wanted to make this a game-play mechanic, I am now able to!
+             * Example: Pulsing screen curvature?? Extreme curvature during a special powerup?? Boss??
+             */
             background->distortionNeedsUpdate = true;
             background->lastCurvature = background->screenCurvature;
         }
@@ -200,7 +209,8 @@ void DrawBackground(Background* background, int width, int height, Texture2D gam
                     float screenX = x * QUAD_SIZE; // X Pos
 
                     // To optimize this code, we try to only calculate distortion for the visible area
-                    float distFromCenter = sqrtf(
+                    float distFromCenter = sqrtf
+                    (
                         powf((screenX - center.x) / width, 2) +
                         powf((screenY - center.y) / height, 2)
                     );
@@ -215,6 +225,9 @@ void DrawBackground(Background* background, int width, int height, Texture2D gam
                     Vector2 p3 = DistortPoint((Vector2){screenX, screenY + QUAD_SIZE}, center,
                                           background->screenCurvature, width, height);
 
+                    /* Here, we cache all of our quad properties, to draw them later (saving CPU cycles)
+                     * We get a specific quad from our array, and define it!
+                     */
                     background->quadCache[quadIndex].position = p1;
                     background->quadCache[quadIndex].width = p2.x - p1.x;
                     background->quadCache[quadIndex].height = p3.y - p1.y;
@@ -224,7 +237,9 @@ void DrawBackground(Background* background, int width, int height, Texture2D gam
             background->distortionNeedsUpdate = false;
         }
 
-        // Just for clarity, this is the distortion of our game screen!
+        /* Just for clarity, this is the distortion of our game screen!
+         * This is also where we re-use our previously cached quads, to draw them withour recalculating.
+         */
         int quadIndex = 0;
 
         for(int y = 0; y < verticalQuads; y++)
@@ -235,6 +250,11 @@ void DrawBackground(Background* background, int width, int height, Texture2D gam
             {
                 float screenX = x * QUAD_SIZE;
 
+                /* Here, we first make our array of distorted quad structs
+                 * Since our quads and their positions are pre-calculated, we only need their positions here!
+                 * Here, we get the memory adress of our quad, and we do this for every quad.
+                 * So, we allocate memory for all quads in our array, and then draw them
+                 */
                 DistortedQuad* quad = &background->quadCache[quadIndex++];
 
                 // Skip if quad is outside screen
@@ -244,12 +264,14 @@ void DrawBackground(Background* background, int width, int height, Texture2D gam
                     continue;
                 }
 
-                // Draw the game screen with distortion
+                // Draw the game screen with distortion!
                 DrawTexturePro(gameScreen,
-                (Rectangle){screenX, screenY, QUAD_SIZE, QUAD_SIZE},
-                (Rectangle){quad->position.x, quad->position.y,
-                          quad->width, quad->height},
-                (Vector2){0, 0}, 0, WHITE);
+                    // Original
+                    (Rectangle){screenX, screenY, QUAD_SIZE, QUAD_SIZE}, //
+                    // Destination rectangle: Our Distorted Quads
+                    (Rectangle){quad->position.x, quad->position.y, //
+                          quad->width, quad->height}, //
+                    (Vector2){0, 0}, 0, WHITE); //
             }
         }
 

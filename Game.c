@@ -186,6 +186,7 @@ void UpdateGame(Game* game)
 {
     float deltaTime = GetFrameTime() * game->timeScale;
     game->spawnSystem.cooldownTimer -= deltaTime; // power ups
+
     UpdateBackground(&game->background, deltaTime, game->isTimewarpActive);
     UpdatePlayerColor(&game->player, game->isTimewarpActive);
 
@@ -405,7 +406,7 @@ void DrawUI(Game* game)
 
 void DrawGame(Game game)
 {
-    BeginTextureMode(game.gameTexture);
+    BeginTextureMode(game.gameTexture); // Render all of this into our game.gameTexture
     {
         ClearBackground(BLACK);
 
@@ -491,6 +492,20 @@ void DrawGame(Game game)
     {
         ClearBackground(BLACK);
 
+        /* 1. Game Elements → game.gameTexture
+         *   ↓
+         * 2. Background Effects:
+         *    a. Static Effects → background.staticEffects
+         *    b. Dynamic Effects → background.effectTexture
+         *    c. Distortion & Composition → background.finalTexture
+         *    ↓
+         * 3. UI Elements → background.uiTexture (DrawUI) =)
+         *    ↓
+         * 4. Final Screen Composition:
+         *    - Background (with game elements and effects)
+         *    - UI layer on top */
+
+        // Then, we draw the game.gameTexture that we rendered in BeginTextureMode above^^
         DrawBackground(&game.background, game.screenWidth, game.screenHeight,
                       game.gameTexture.texture);
 
@@ -498,11 +513,20 @@ void DrawGame(Game game)
         DrawTexturePro(game.background.uiTexture.texture,
               (Rectangle){ 0, 0,
                          game.background.uiTexture.texture.width,
-                         -game.background.uiTexture.texture.height },
+                         -game.background.uiTexture.texture.height }, // - to flip vertically
               (Rectangle){ 0, 0,
                          game.screenWidth,
                          game.screenHeight },
               (Vector2){ 0, 0 }, 0, WHITE);
+
+        // DrawTexturePro(
+        //     texture,          // The texture to draw
+        //     sourceRec,        // What part of the texture to use
+        //     destRec,          // Where to draw it on screen
+        //     origin,           // Rotation origin point
+        //     rotation,
+        //     tint
+        // );
     }
     EndDrawing();
 }

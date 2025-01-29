@@ -17,6 +17,10 @@ int main()
         DrawGame(game);
     }
 
+    // In my coding rush, I forgot to prevent a memory leak of my render textures.
+    UnloadRenderTexture(game.gameTexture);
+    UnloadBackground(&game.background);
+
     CloseWindow();
 
     return 0;

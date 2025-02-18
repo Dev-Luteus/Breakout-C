@@ -55,7 +55,8 @@ Game InitGame(int width, int height)
     // Player, Ball, Blocks
     game.player = InitPlayer(width, height);
 
-    Vector2 initialBallPos = MyVector2Create(
+    Vector2 initialBallPos = MyVector2Create
+    (
         game.player.position.x + game.player.width / 2,
         game.player.position.y - 20
     );
